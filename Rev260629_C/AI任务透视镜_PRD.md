@@ -886,9 +886,9 @@ CSV 导入完成后自动跑一次健康检查，若有 P0/P1 问题则直接弹
 | `/progress?requestId=xxx` | GET | **v4.0 新增**：查询同步进度和日志 |
 
 **配置**：
-- 默认端口：9876
-- Lark CLI 路径：`~/.workbuddy/binaries/node/` 下的 lark-cli
-- 通过 lark-cli（`@larksuite/cli`）与飞书 API 交互
+- 默认端口：9877
+- Lark CLI：需先安装 lark-cli（`@larksuite/cli`），并按需配置环境变量或本地凭证文件
+- 通过 lark-cli 与飞书 API 交互
 
 **超时与重试机制（v4.0 新增）**：
 
