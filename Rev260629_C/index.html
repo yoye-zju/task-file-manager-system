@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 任务透视镜 — 让项目全局一目了然</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="#4F46E5" opacity="0.15"/><circle cx="16" cy="16" r="6" fill="#4F46E5"/><circle cx="16" cy="16" r="10" stroke="#4F46E5" stroke-width="2" stroke-dasharray="4 3"/><circle cx="16" cy="6" r="2" fill="#818CF8"/><circle cx="26" cy="16" r="2" fill="#818CF8"/><circle cx="6" cy="16" r="2" fill="#818CF8"/><circle cx="16" cy="26" r="2" fill="#818CF8"/></svg>
+      <span>任务透视镜</span>
+      <span class="version-badge" id="version-badge" title="点击查看更新记录">R3.30</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="nav-item active" data-view="dashboard">
+      <span class="icon">🌐</span> <span>全局仪表盘</span>
+    </button>
+    <button class="nav-item" data-view="list">
+      <span class="icon">📋</span> <span>任务列表</span>
+      <span class="badge" id="task-count">0</span>
+    </button>
+    <button class="nav-item" data-view="timeline">
+      <span class="icon">📅</span> <span>日历</span>
+    </button>
+    <button class="nav-item" data-view="matrix">
+      <span class="icon">🎯</span> <span>优先级矩阵</span>
+    </button>
+    <button class="nav-item" data-view="board">
+      <span class="icon">👥</span> <span>团队看板</span>
+    </button>
+    <button class="nav-item" data-view="habits">
+      <span class="icon">🔥</span> <span>每日习惯</span>
+    </button>
+    <div class="nav-divider"></div>
+    <button class="nav-item" id="btn-ai-input">
+      <span class="icon">🤖</span> <span>AI 智能录入</span>
+    </button>
+    <div class="nav-divider"></div>
+    <div class="quick-actions">
+      <button class="quick-action-btn" id="qa-today" onclick="quickFilter('todayTodo')">
+        <span class="qa-icon">📅</span>
+        <span class="qa-text">今日待办</span>
+        <span class="qa-badge" id="badge-today">0</span>
+      </button>
+      <button class="quick-action-btn" id="qa-week" onclick="quickFilter('weekDue')">
+        <span class="qa-icon">📆</span>
+        <span class="qa-text">本周到期</span>
+        <span class="qa-badge" id="badge-week">0</span>
+      </button>
+      <button class="quick-action-btn" id="qa-month" onclick="quickFilter('monthDue')">
+        <span class="qa-icon">🗓️</span>
+        <span class="qa-text">本月到期</span>
+        <span class="qa-badge" id="badge-month">0</span>
+      </button>
+      <button class="quick-action-btn" id="qa-timeline-tl" onclick="quickFilter('timelineTable')">
+        <span class="qa-icon">🕐</span>
+        <span class="qa-text">时间线</span>
+        <span class="qa-badge" id="badge-timeline-tl">0</span>
+      </button>
+      <button class="quick-action-btn" id="qa-done" onclick="quickFilter('done')">
+        <span class="qa-icon">✅</span>
+        <span class="qa-text">已完成</span>
+        <span class="qa-badge" id="badge-done">0</span>
+      </button>
+      <div class="quick-action-row">
+        <button class="quick-action-btn quick-action-half" id="qa-archive-overlay" onclick="quickFilter('archiveOverlay')">
+          <span class="qa-icon">📦</span>
+          <span class="qa-text">叠加</span>
+          <span class="qa-badge" id="badge-archive-overlay">0</span>
+        </button>
+        <button class="quick-action-btn quick-action-half" id="qa-archive-filter" onclick="quickFilter('archiveFilter')">
+          <span class="qa-icon">🔍</span>
+          <span class="qa-text">筛选</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="btn btn-outline btn-sm" id="btn-help" style="width:100%;margin-bottom:6px;" title="查看使用帮助与快捷键">❓ 使用帮助</button>
+    <div>数据保存在本地浏览器</div>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<main class="main">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="ai-input-wrapper">
+      <input type="text" class="ai-input" id="quick-ai-input" placeholder="🤖 快速输入：描述你的任务，AI 帮你结构化...（如：下周五前完成Q2汇报PPT，需要先收集各部门数据）">
+      <button class="ai-submit" id="btn-quick-ai" title="AI 解析">▶</button>
+    </div>
+    <button class="btn btn-outline btn-sm" id="btn-load-demo">📦 加载演示数据</button>
+    <button class="btn btn-outline btn-sm" id="btn-add-task">+ 添加任务</button>
+    <button class="btn btn-outline btn-sm" id="btn-export-csv" title="导出为 CSV 和 TXT 文件保存到本地">📥 导出数据</button>
+    <button class="btn btn-outline btn-sm" id="btn-import-csv" title="从本地 CSV 文件导入数据">📤 导入 CSV</button>
+    <button class="btn btn-outline btn-sm" id="btn-backup-json" title="导出完整 JSON 备份（任务/习惯/金句/高亮/颜色）">💾 备份</button>
+    <button class="btn btn-outline btn-sm" id="btn-restore-json" title="从 JSON 备份文件恢复全部数据（会覆盖当前数据）">♻️ 恢复</button>
+    <span class="data-source-badge" id="data-source-badge" title="当前数据来源">📦 演示数据 · 26 条</span>
+    <button class="btn btn-outline btn-sm" id="btn-feishu-pull" title="从飞书多维表格拉取数据到本地" onclick="try{syncPullFromFeishu();}catch(e){console.error('pull btn error:',e);alert('同步出错:'+e.message);}">🔄 飞书→本地</button>
+    <button class="btn btn-outline btn-sm" id="btn-feishu-push" title="将本地数据推送到飞书多维表格&#10;按住 Shift 点击 = 全量推送（忽略增量跳过）" onclick="try{syncPushToFeishu();}catch(e){console.error('push btn error:',e);alert('同步出错:'+e.message);}">📤 本地→飞书</button>
+    <button class="btn btn-primary btn-sm" id="btn-sync-diff" title="双向同步：对比本地与飞书差异，一键同步" onclick="try{showSyncDiff();}catch(e){console.error('sync diff error:',e);alert('同步出错:'+e.message);}">🔄 双向同步</button>
+    <button class="btn btn-outline btn-sm" id="btn-sync-pause" title="暂停/恢复同步功能" onclick="toggleSyncPause()" style="font-size:11px;">⏸️ 暂停同步</button>
+    <button class="btn btn-outline btn-sm btn-health" id="btn-health-check" title="检查层级与数据完整性问题" onclick="try{showHealthCheck();}catch(e){console.error('health check error:',e);alert('检查出错:'+e.message);}">🩺 层级健康度<span class="health-badge" id="health-badge" style="display:none;">0</span></button>
+    <div id="sync-progress" class="sync-progress" style="display:none;">
+      <div class="progress-header">
+        <span id="progress-status">准备中...</span>
+        <button id="progress-close" class="progress-close-btn" onclick="closeProgress()">×</button>
+      </div>
+      <div class="progress-bar-container">
+        <div id="progress-bar" class="progress-bar" style="width:0%"></div>
+      </div>
+      <div id="progress-message" class="progress-message"></div>
+      <div id="progress-logs" class="progress-logs"></div>
+    </div>
+    <div class="toast-container" id="toast-container"></div>
+  </div>
+
+  <!-- Content Area -->
+  <div class="content" id="content">
+    <!-- Dashboard View -->
+    <div class="view-panel active" id="view-dashboard"></div>
+    <!-- List View -->
+    <div class="view-panel" id="view-list"></div>
+    <!-- Timeline View -->
+    <div class="view-panel" id="view-timeline"></div>
+    <!-- Matrix View -->
+    <div class="view-panel" id="view-matrix"></div>
+    <!-- Board View -->
+    <div class="view-panel" id="view-board"></div>
+    <!-- Timeline Table View (all tasks sorted by timestamp desc, exclude archived) -->
+    <div class="view-panel" id="view-timeline-table"></div>
+    <!-- Habits View -->
+    <div class="view-panel" id="view-habits"></div>
+    <!-- Files View -->
+    <div class="view-panel" id="view-files"></div>
+  </div>
+</main>
+
+<!-- AI Input Modal -->
+<div class="modal-overlay" id="modal-ai" style="display:none;">
+  <div class="modal fade-in">
+    <div class="modal-header">
+      <h3>🤖 AI 智能任务录入</h3>
+      <button class="modal-close" id="btn-modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:var(--gray-600);margin-bottom:12px;">粘贴你的零散备忘、聊天记录或会议笔记，AI 会自动提取任务、截止日期和依赖关系。</p>
+      <textarea id="ai-textarea" placeholder="示例：
+1. 下周五前完成Q2业务汇报PPT - 很紧急
+2. 汇报前需要先收齐各部门的Q2数据
+3. 约王总讨论预算调整方案，不着急
+4. 技术方案评审，有三个方案需要对比选择
+5. 月度复盘会议纪要整理，这周五完成"></textarea>
+      <div class="hint-text">
+        💡 AI 会自动识别：时间（截止日期）、优先级（紧急/重要）、依赖关系（需要先...）、分支（方案A/B/C）
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="btn-modal-clear">清空</button>
+      <button class="btn btn-outline" id="btn-modal-demo">填入示例</button>
+      <button class="btn btn-primary" id="btn-modal-parse">✨ AI 智能解析</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Task Modal -->
+<div class="modal-overlay" id="modal-task" style="display:none;">
+  <div class="modal modal--task-edit">
+    <div class="modal-header">
+      <h3 id="modal-task-title">📝 添加任务</h3>
+      <button class="modal-close" id="btn-task-close">✕</button>
+    </div>
+    <div class="modal-breadcrumb" id="modal-breadcrumb" style="display:none;"></div>
+    <div class="modal-task-layout">
+      <!-- 左侧表单 -->
+      <div class="modal-task-form">
+        <!-- 分组1: 基本信息 (默认展开) -->
+        <div class="task-group open">
+          <div class="task-group-header" onclick="this.parentElement.classList.toggle('open')">
+            <span class="arrow">▶</span> 基本信息
+          </div>
+          <div class="task-group-body">
+            <div class="form-row full">
+              <div class="form-field form-field-full">
+                <input type="text" id="task-title" placeholder="任务标题" oninput="updateTaskPreview()">
+              </div>
+            </div>
+            <div class="form-row full">
+              <div class="form-field">
+                <label>层级类型</label>
+                <select id="task-type" onchange="onTypeChange();updateTaskPreview()">
+                  <option value="object">🎯 目标 (Object)</option>
+                  <option value="kr">📊 关键结果 (KR)</option>
+                  <option value="target">🎯 子目标 (Target)</option>
+                  <option value="task" selected>✅ 任务 (Task)</option>
+                  <option value="record">📝 记录 (Record)</option>
+                  <option value="schedule">📅 日程 (Schedule)</option>
+                  <option value="idea">💡 想法 (Idea)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row full">
+              <div class="form-field form-field-full">
+                <label>所属上级</label>
+                <div class="parent-row">
+                  <div class="parent-selector" id="parent-selector">
+                    <div class="parent-chips" id="parent-chips">
+                      <input type="text" class="parent-search-input" id="parent-search" placeholder="🔍 搜索上级任务..." autocomplete="off">
+                    </div>
+                    <div class="parent-dropdown" id="parent-dropdown"></div>
+                  </div>
+                  <input type="hidden" id="task-parent" value="">
+                  <button type="button" class="btn btn-outline btn-sm btn-quick-parent" onclick="quickCreateParent()" title="快速新建一个上级">➕ 新建</button>
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>优先级</label>
+                <select id="task-priority">
+                  <option value="重要紧急">重要紧急</option>
+                  <option value="重要不紧急">重要不紧急</option>
+                  <option value="紧急不重要" selected>紧急不重要</option>
+                  <option value="不紧急不重要">不紧急不重要</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>状态</label>
+                <select id="task-status">
+                  <option value="todo">待办</option>
+                  <option value="preparing">准备中</option>
+                  <option value="progress">进行中</option>
+                  <option value="done">已完成</option>
+                  <option value="blocked">阻塞</option>
+                  <option value="cancel">已取消</option>
+                  <option value="archived">已归档</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row full">
+              <div class="form-field form-field-full">
+                <label>进度 (%)</label>
+                <div class="progress-row">
+                  <input type="range" id="task-progress-slider" min="0" max="100" value="0" oninput="document.getElementById('task-progress').value=this.value;updateTaskPreview()">
+                  <input type="number" id="task-progress" min="0" max="100" value="0" oninput="document.getElementById('task-progress-slider').value=this.value;updateTaskPreview()">
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>时间戳（创建）</label>
+                <input type="text" id="task-timestamp" readonly style="background:var(--gray-50);color:var(--gray-500);font-family:monospace;font-size:14px;letter-spacing:0.5px;">
+              </div>
+              <div class="form-field">
+                <label>完成时间</label>
+                <input type="text" id="task-completedat" readonly style="background:var(--gray-50);color:var(--gray-500);font-family:monospace;font-size:14px;letter-spacing:0.5px;" placeholder="未完成">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 分组2: 时间依赖 (默认展开) -->
+        <div class="task-group open task-group-time">
+          <div class="task-group-header" onclick="this.parentElement.classList.toggle('open')">
+            <span class="arrow">▶</span> 时间与依赖
+          </div>
+          <div class="task-group-body">
+            <div class="form-row">
+              <div class="form-field">
+                <label>截止日期</label>
+                <input type="date" id="task-deadline" onchange="syncRecurringDates('deadline')">
+              </div>
+              <div class="form-field">
+                <label>开始时间</label>
+                <input type="date" id="task-startdate" onchange="syncRecurringDates('startDate')">
+              </div>
+            </div>
+            <div id="recurring-batch-bar" class="recurring-batch-bar" style="display:none;"></div>
+            <div class="form-row full" id="recurring-toggle-row">
+              <div class="form-field form-field-full" style="display:flex;align-items:center;gap:8px;">
+                <input type="checkbox" id="task-recurring" onchange="toggleRecurringUI()">
+                <label for="task-recurring" style="margin:0;cursor:pointer;font-weight:600;">🔁 周期任务（开始=截止，多次日期）</label>
+              </div>
+            </div>
+            <div id="recurring-panel" style="display:none;">
+              <div class="form-row full">
+                <div class="form-field form-field-full">
+                  <label>重复频率（选好后点「按规则生成」才会自动生成日期）</label>
+                  <select id="recur-freq" onchange="_syncRecurFreqUI()" style="max-width:140px;">
+                    <option value="daily">每天</option>
+                    <option value="weekly">每周</option>
+                    <option value="monthly">每月</option>
+                  </select>
+                  <span id="recur-weekdays" style="display:none;margin-left:10px;vertical-align:middle;">
+                    <label style="font-weight:400;margin-right:4px;">选择星期：</label>
+                    <input type="checkbox" class="recur-wd" value="1"><label style="font-weight:400;margin:0 4px 0 2px;">一</label>
+                    <input type="checkbox" class="recur-wd" value="2"><label style="font-weight:400;margin:0 4px 0 2px;">二</label>
+                    <input type="checkbox" class="recur-wd" value="3"><label style="font-weight:400;margin:0 4px 0 2px;">三</label>
+                    <input type="checkbox" class="recur-wd" value="4"><label style="font-weight:400;margin:0 4px 0 2px;">四</label>
+                    <input type="checkbox" class="recur-wd" value="5"><label style="font-weight:400;margin:0 4px 0 2px;">五</label>
+                    <input type="checkbox" class="recur-wd" value="6"><label style="font-weight:400;margin:0 4px 0 2px;">六</label>
+                    <input type="checkbox" class="recur-wd" value="7"><label style="font-weight:400;margin:0 4px 0 2px;">日</label>
+                  </span>
+                  <span id="recur-dayofmonth" style="display:none;margin-left:10px;vertical-align:middle;">
+                    <label style="font-weight:400;margin-right:4px;">每月</label>
+                    <select id="recur-dom" style="max-width:80px;">
+                      <option value="1">1号</option><option value="2">2号</option><option value="3">3号</option><option value="4">4号</option><option value="5">5号</option><option value="6">6号</option><option value="7">7号</option><option value="8">8号</option><option value="9">9号</option><option value="10">10号</option><option value="11">11号</option><option value="12">12号</option><option value="13">13号</option><option value="14">14号</option><option value="15">15号</option><option value="16">16号</option><option value="17">17号</option><option value="18">18号</option><option value="19">19号</option><option value="20">20号</option><option value="21">21号</option><option value="22">22号</option><option value="23">23号</option><option value="24">24号</option><option value="25">25号</option><option value="26">26号</option><option value="27">27号</option><option value="28">28号</option><option value="29">29号</option><option value="30">30号</option><option value="31">31号</option>
+                    </select>
+                  </span>
+                  <button type="button" class="btn btn-outline btn-sm" onclick="_applyRecurRule()" title="按当前频率规则自动勾选日期（仍可在日历上手动增删）">⚡ 按规则生成</button>
+                </div>
+              </div>
+              <div class="form-row full">
+                <div class="form-field form-field-full">
+                  <label>📆 点选日期（点击日历勾选/取消，紫色=规则生成，浅色=手动添加）</label>
+                  <div id="recur-minical"></div>
+                  <div id="recur-chips"></div>
+                </div>
+              </div>
+            </div>
+            <div class="form-row full">
+              <div class="form-field form-field-full">
+                <label>依赖任务（前置任务，可搜索添加，点击 × 移除）</label>
+                <div class="dep-selector" id="dep-selector">
+                  <div class="dep-chips" id="dep-chips">
+                    <input type="text" class="dep-search-input" id="dep-search" placeholder="🔍 搜索并添加依赖任务..." autocomplete="off">
+                  </div>
+                  <div class="dep-dropdown" id="dep-dropdown"></div>
+                </div>
+                <div class="dep-hint" id="dep-hint"></div>
+              </div>
+            </div>
+            <div class="form-row full">
+              <div class="form-field form-field-full">
+                <label>后置任务（完成后才能开始的任务，点击 × 移除）</label>
+                <div class="dep-selector" id="next-selector">
+                  <div class="dep-chips" id="next-chips">
+                    <input type="text" class="dep-search-input" id="next-search" placeholder="🔍 搜索并添加后置任务..." autocomplete="off">
+                  </div>
+                  <div class="dep-dropdown" id="next-dropdown"></div>
+                </div>
+                <div class="dep-hint" id="next-hint"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 分组3: 标签附件 (默认展开) -->
+        <div class="task-group open task-group-tags">
+          <div class="task-group-header" onclick="this.parentElement.classList.toggle('open')">
+            <span class="arrow">▶</span> 标签与附件
+          </div>
+          <div class="task-group-body">
+            <div class="form-row">
+              <div class="form-field">
+                <label>标签/分类</label>
+                <input type="text" id="task-tag" placeholder="如: 汇报, 技术, 管理">
+              </div>
+              <div class="form-field">
+                <label>负责人</label>
+                <input type="text" id="task-assignee" placeholder="如: 张三">
+              </div>
+            </div>
+            <div class="form-row full">
+              <div class="form-field form-field-full">
+                <label>相关文件或网络链接</label>
+                <div class="file-selector" id="file-selector">
+                  <div class="file-chips" id="file-chips">
+                    <input type="text" class="file-search-input" id="file-search"
+                           placeholder="搜索文件管理系统中的文件..." autocomplete="off">
+                  </div>
+                  <div class="file-dropdown" id="file-dropdown" style="display:none;"></div>
+                  <div class="file-link-form">
+                    <input type="text" id="file-link-url" placeholder="粘贴 http:// 或 https:// 网络链接">
+                    <input type="text" id="file-link-name" placeholder="显示名称（可选）">
+                    <button type="button" class="btn btn-outline btn-sm" id="btn-add-file-link">添加链接</button>
+                  </div>
+                  <div class="form-hint" id="file-hint" style="margin-top:4px;font-size:11px;color:var(--gray-500);">
+                    未添加相关文件。可搜索本地文件，也可粘贴网络链接。
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-row full">
+              <div class="form-field form-field-full" style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-size:13px;color:var(--gray-700);">
+                  <input type="checkbox" id="task-milestone" style="width:16px;height:16px;cursor:pointer;">
+                  设为里程碑（时间线中高亮显示）
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-size:13px;color:var(--gray-700);">
+                  <input type="checkbox" id="task-archived" style="width:16px;height:16px;cursor:pointer;">
+                  已归档（不进入日常视图）
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 描述 (始终可见) -->
+        <div class="form-row full" style="margin-top:12px;">
+          <div class="form-field form-field-full">
+            <label>描述</label>
+            <textarea id="task-desc" rows="3" placeholder="详细描述..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧预览面板 -->
+      <div class="modal-task-preview">
+        <div class="preview-section">
+          <h4>任务位置</h4>
+          <div class="preview-tree" id="preview-tree-content">
+            <div style="font-size:11px;color:var(--gray-400);">请输入标题</div>
+          </div>
+        </div>
+        <div class="preview-section" id="preview-siblings-section" style="display:none;">
+          <h4>同级节点</h4>
+          <div class="preview-siblings" id="preview-siblings-content"></div>
+        </div>
+        <div class="preview-section">
+          <h4>依赖关系</h4>
+          <div class="preview-deps" id="preview-deps-content">
+            <div style="font-size:11px;color:var(--gray-400);">无依赖关系</div>
+          </div>
+        </div>
+        <div class="preview-section">
+          <h4>进度</h4>
+          <div class="preview-progress-bar">
+            <div class="fill" id="preview-progress-fill" style="width:0%"></div>
+          </div>
+          <div class="preview-progress-text" id="preview-progress-text">0%</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="btn-task-delete" style="display:none;margin-right:auto;">🗑 删除</button>
+      <button class="btn btn-outline" id="btn-task-cancel">取消</button>
+      <button class="btn btn-primary" id="btn-task-save">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip" style="display:none;"></div>
+<div class="ctx-menu" id="ctx-menu"></div>
+
+<!-- Quotes Management Modal -->
+<div class="modal-overlay" id="modal-quotes" style="display:none;">
+  <div class="modal modal--quotes fade-in">
+    <div class="modal-header">
+      <h3>✨ 金句管理</h3>
+      <button class="modal-close" onclick="closeQuotesModal()">✕</button>
+    </div>
+    <div class="modal-body" id="quotes-mgmt-body"></div>
+  </div>
+</div>
+
+<!-- Changelog Modal -->
+<div class="modal-overlay" id="modal-changelog" style="display:none;">
+  <div class="modal modal--changelog fade-in">
+    <div class="modal-header">
+      <h3>📜 更新记录</h3>
+      <button class="modal-close" id="btn-changelog-close">✕</button>
+    </div>
+    <div class="modal-body" id="changelog-body">
+      <div class="changelog-loading">加载中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- 使用帮助弹窗（R3.25） -->
+<div class="modal-overlay" id="modal-help" style="display:none;">
+  <div class="modal modal--help fade-in">
+    <div class="modal-header">
+      <h3>❓ 使用帮助</h3>
+      <button class="modal-close" id="btn-help-close">✕</button>
+    </div>
+    <div class="modal-body" id="help-body">
+      <div class="changelog-loading">加载中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- 层级健康度检查面板（R2.7） -->
+<div class="modal-overlay" id="modal-health" style="display:none;">
+  <div class="modal modal--health fade-in">
+    <div class="modal-header">
+      <h3>🩺 层级健康度检查</h3>
+      <button class="modal-close" id="btn-health-close">✕</button>
+    </div>
+    <div class="modal-body" id="health-body"></div>
+    <div class="health-footer">
+      <span class="health-count" id="health-selected-count">已选 0 项</span>
+      <button class="btn btn-outline btn-sm" id="btn-health-undo" style="display:none;">↩ 撤销上次修复</button>
+      <button class="btn btn-primary btn-sm" id="btn-health-fix" disabled>修复选中项</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

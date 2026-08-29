@@ -1,0 +1,56 @@
+# 任务和文件管理系统 - 个人数据/凭证/日志一律不入库
+# 编码要求：UTF-8 无 BOM
+
+# ---- 根目录内部文档（含个人习惯数据/交接人信息）----
+交接文档_2026-07-25.md
+项目说明.md
+每日习惯整合方案_v4.2.md
+每日习惯_导入用.csv
+所有习惯-2026.csv
+习惯追踪热力图_PRD.md
+nul
+
+# ---- 临时检查文件 ----
+_check_ftm.html
+_check_ftm2.js
+
+# ---- 项目记忆 / AI 工具工作目录 ----
+.workbuddy/
+.trae/
+
+# ---- 备份目录（历史完整快照，含个人数据）----
+AI任务透视镜 R2.6 备份/
+AI任务透视镜-备份 20260801/
+文件系统-备份 20270730/
+文件系统-备份 20270807/
+
+# ---- 飞书同步产生的用户数据（含真实业务内容）----
+feishu_data.json
+push_log.json
+sync_analysis.json
+local_tasks.json
+sync_report.json
+feishu.credentials.js
+
+# ---- 文件标签管理器运行时数据（db.json / backup / content_links.json）----
+file-tag-manager/data/
+
+# ---- 日志 ----
+*.log
+
+# ---- Python 缓存 ----
+__pycache__/
+*.pyc
+
+# ---- 冗余/废弃/临时脚本 ----
+app_cleaned.js
+_extract_inline.js
+_test_cd.bat
+
+# ---- 编辑器与系统文件 ----
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.idea/
+.vscode/

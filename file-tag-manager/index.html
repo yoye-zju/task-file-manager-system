@@ -1,0 +1,2666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>文件标签管理系统</title>
+<style>
+/* ========== 全局 ========== */
+* { margin:0; padding:0; box-sizing: border-box; }
+/* 默认主题：实验室白 Lab Light */
+:root, [data-skin="lab"] {
+  --primary: #2D9D8B;
+  --primary-light: rgba(45,157,139,0.08);
+  --primary-dark: #1F7A6B;
+  --success: #35966B;
+  --danger: #D1425A;
+  --bg: #F5F7FA;
+  --card: #FFFFFF;
+  --card2: #EDF0F5;
+  --border: rgba(0,0,0,0.10);
+  --border-strong: rgba(0,0,0,0.16);
+  --text: #1A202C;
+  --text-secondary: #3D4A5C;
+  --text-muted: #7B8798;
+  --radius: 3px;
+  --shadow: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.08);
+  /* 工具栏 */
+  --toolbar-bg: #FFFFFF;
+  --toolbar-title: #2D9D8B;
+  --toolbar-border: rgba(0,0,0,0.10);
+  --toolbar-btn-bg: #EDF0F5;
+  --toolbar-btn-text: #4A5568;
+  --toolbar-btn-hover: #D5DCE6;
+  --toolbar-info: #8E99A8;
+  --toolbar-version: rgba(45,157,139,0.4);
+  --acc-color: #C77A30;
+  --acc-dim: rgba(199,122,48,0.08);
+  /* 滚动条 */
+  --scrollbar-thumb: #D5DCE6;
+  --scrollbar-thumb-hover: #C2CAD5;
+}
+/* Instrument 暗色 */
+[data-skin="instrument"] {
+  --primary: #4CC9B0;
+  --primary-light: rgba(76,201,176,0.15);
+  --primary-dark: #3AAE96;
+  --success: #4CAF84;
+  --danger: #E0556A;
+  --bg: #080C12;
+  --card: #0D131A;
+  --card2: #121923;
+  --border: rgba(138,149,165,0.10);
+  --border-strong: rgba(138,149,165,0.18);
+  --text: #E8ECF1;
+  --text-secondary: #8A95A5;
+  --text-muted: #5A6678;
+  --radius: 3px;
+  --shadow: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --toolbar-bg: #0D131A;
+  --toolbar-title: #4CC9B0;
+  --toolbar-border: rgba(138,149,165,0.18);
+  --toolbar-btn-bg: #192332;
+  --toolbar-btn-text: #8A95A5;
+  --toolbar-btn-hover: #222D3D;
+  --toolbar-info: #5A6678;
+  --toolbar-version: rgba(76,201,176,0.4);
+  --acc-color: #F0A050;
+  --acc-dim: rgba(240,160,80,0.08);
+  --scrollbar-thumb: #2E3B4E;
+  --scrollbar-thumb-hover: #5A6678;
+}
+/* Cyber 赛博终端 */
+[data-skin="cyber"] {
+  --primary: #7FFF3F;
+  --primary-light: rgba(127,255,63,0.10);
+  --primary-dark: #5CBF2F;
+  --success: #3DFFA3;
+  --danger: #FF4444;
+  --bg: #060808;
+  --card: #0C1012;
+  --card2: #111618;
+  --border: rgba(127,255,63,0.08);
+  --border-strong: rgba(127,255,63,0.18);
+  --text: #E8E8E8;
+  --text-secondary: #8896A0;
+  --text-muted: #5A6870;
+  --radius: 2px;
+  --shadow: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --toolbar-bg: #0C1012;
+  --toolbar-title: #7FFF3F;
+  --toolbar-border: rgba(127,255,63,0.12);
+  --toolbar-btn-bg: transparent;
+  --toolbar-btn-text: #8896A0;
+  --toolbar-btn-hover: rgba(127,255,63,0.10);
+  --toolbar-info: #5A6870;
+  --toolbar-version: rgba(127,255,63,0.4);
+  --acc-color: #FF3D7F;
+  --acc-dim: rgba(255,61,127,0.10);
+  --scrollbar-thumb: #1F2629;
+  --scrollbar-thumb-hover: #7FFF3F;
+}
+/* Ember 熔岩橘 */
+[data-skin="ember"] {
+  --primary: #FF6B4A;
+  --primary-light: rgba(255,107,74,0.12);
+  --primary-dark: #E05A3A;
+  --success: #4DE8A0;
+  --danger: #FF4444;
+  --bg: #0D0704;
+  --card: #130B07;
+  --card2: #1A0E09;
+  --border: rgba(255,107,74,0.08);
+  --border-strong: rgba(255,107,74,0.20);
+  --text: #F5E8E0;
+  --text-secondary: #B8A090;
+  --text-muted: #7A6055;
+  --radius: 4px;
+  --shadow: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --toolbar-bg: #130B07;
+  --toolbar-title: #FF6B4A;
+  --toolbar-border: rgba(255,107,74,0.20);
+  --toolbar-btn-bg: transparent;
+  --toolbar-btn-text: #B8A090;
+  --toolbar-btn-hover: rgba(255,107,74,0.12);
+  --toolbar-info: #7A6055;
+  --toolbar-version: rgba(255,107,74,0.4);
+  --acc-color: #FFB84D;
+  --acc-dim: rgba(255,184,77,0.10);
+  --scrollbar-thumb: #2C1710;
+  --scrollbar-thumb-hover: #FF6B4A;
+}
+body { font-family: -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; }
+
+/* ========== 顶部工具栏 ========== */
+.toolbar {
+  background: var(--toolbar-bg);
+  padding: 10px 20px;
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--toolbar-border);
+  box-shadow: var(--shadow-sm);
+}
+.toolbar .search-box { flex: 1; max-width: 420px; position: relative; }
+.toolbar .search-box input {
+  width: 100%; padding: 8px 12px 8px 34px;
+  border: 1px solid var(--border-strong); border-radius: 20px;
+  font-size: 13px; outline: none;
+  background: var(--card2);
+  color: var(--text);
+  transition: box-shadow 0.2s;
+}
+.toolbar .search-box input:focus { box-shadow: 0 0 0 3px var(--primary-light); border-color: var(--primary); }
+.toolbar .search-box::before { content: "🔍"; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 13px; }
+.toolbar .search-box input::placeholder { color: var(--text-muted); }
+.toolbar .search-box::before { content: "🔍"; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 13px; }
+.toolbar .btn { padding: 7px 14px; border: none; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+.toolbar .btn-primary { background: var(--primary); color: #fff; }
+.toolbar .btn-primary:hover { filter: brightness(1.1); }
+.toolbar .btn-secondary { background: var(--toolbar-btn-bg); color: var(--toolbar-btn-text); border: 1px solid var(--border-strong); }
+.toolbar .btn-secondary:hover { background: var(--toolbar-btn-hover); }
+.toolbar .toolbar-info { font-size: 12px; color: var(--toolbar-info); margin-left: auto; }
+.toolbar .toolbar-version { font-size: 11px; color: var(--toolbar-version); margin-left: 6px; margin-right: 8px; transition: all 0.15s; }
+.toolbar .toolbar-version:hover { transform: scale(1.1); opacity: 0.8; }
+/* Changelog */
+.changelog-ver { font-size: 16px; font-weight: 700; color: var(--primary); margin-top: 16px; }
+.changelog-ver:first-child { margin-top: 0; }
+.changelog-date { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+.changelog-list { list-style: none; padding: 0; margin: 0 0 4px 0; }
+.changelog-list li { padding: 3px 0; font-size: 13px; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+.changelog-list li:last-child { border-bottom: none; }
+.changelog-list li::before { content: "• "; color: var(--primary); margin-right: 4px; }
+.toolbar .toolbar-title { font-size: 15px; font-weight: 700; color: var(--toolbar-title); letter-spacing: 0.5px; margin-right: 4px; }
+/* 皮肤切换按钮 */
+.skin-toggle {
+  padding: 4px 8px; border: 1px solid var(--border-strong); border-radius: var(--radius);
+  background: var(--card2); cursor: pointer; font-size: 14px; color: var(--text-secondary);
+  transition: all 0.15s; margin-left: 4px; line-height: 1;
+}
+.skin-toggle:hover { border-color: var(--primary); color: var(--primary); }
+
+/* ========== 主布局 ========== */
+.main { display: flex; flex: 1; overflow: hidden; }
+
+/* ========== 左侧筛选面板 ========== */
+.filter-panel {
+  width: 340px;
+  background: var(--card2);
+  border-right: 1px solid var(--border-strong);
+  overflow-y: auto;
+  flex-shrink: 0;
+  padding: 14px 14px 20px;
+}
+.filter-panel::-webkit-scrollbar { width: 5px; }
+.filter-panel::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+.filter-panel::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+/* 面板头部：视觉锚点 */
+.filter-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px 10px; margin-bottom: 6px;
+  border-bottom: 2px solid var(--primary);
+  font-size: 13px; font-weight: 700; color: var(--text);
+  letter-spacing: 0.3px; user-select: none;
+}
+.filter-panel-header .filter-panel-count {
+  font-size: 11px; font-weight: 500; color: var(--text-muted);
+  background: var(--card); border: 1px solid var(--border);
+  padding: 1px 8px; border-radius: 10px;
+}
+.filter-section { margin-bottom: 16px; }
+.filter-section-title {
+  font-size: 12.5px; font-weight: 700; color: var(--text);
+  margin-bottom: 8px; display: flex; align-items: center; gap: 4px;
+  cursor: pointer; user-select: none; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.filter-section-title::before { content: "▼"; font-size: 9px; color: var(--primary); transition: transform 0.2s; }
+.filter-section-title.collapsed::before { transform: rotate(-90deg); }
+/* 维度计数徽章 */
+.dim-count {
+  font-size: 10px; font-weight: 600; color: var(--primary);
+  background: var(--primary-light); border-radius: 8px;
+  padding: 0 6px; line-height: 14px; margin-left: 2px;
+}
+.tag-add-btn {
+  font-size: 14px; font-weight: 400; color: var(--text-secondary); cursor: pointer;
+  padding: 0 5px; line-height: 1; transition: all 0.15s; margin-left: auto;
+  border-radius: 4px;
+}
+.tag-add-btn:hover { color: var(--primary); background: var(--primary-light); }
+.tag-quick-add { display: flex; align-items: center; gap: 4px; padding: 4px 0; }
+.tag-quick-input {
+  flex: 1; padding: 4px 8px; border: 1px solid var(--border-strong); border-radius: 6px;
+  font-size: 12px; outline: none; min-width: 0;
+}
+.tag-quick-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+.tag-quick-btn {
+  font-size: 14px; cursor: pointer; padding: 2px 6px; border-radius: 4px; color: var(--primary);
+  transition: all 0.15s; font-weight: 700;
+}
+.tag-quick-btn:hover { background: var(--primary-light); }
+.tag-quick-btn.cancel { color: var(--danger); }
+.tag-quick-btn.cancel:hover { background: #FEE2E2; }
+.filter-section-content { padding-left: 2px; }
+/* 标签色点：让每个标签自带色彩焦点 */
+.tag-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0; margin-right: 2px;
+  box-shadow: 0 0 0 1.5px rgba(255,255,255,0.8) inset;
+}
+.filter-tag {
+  display: inline-flex; align-items: center; padding: 3px 10px; margin: 2px;
+  border-radius: 14px; font-size: 12px; cursor: pointer;
+  border: 1px solid var(--border-strong); background: var(--card);
+  transition: all 0.15s; color: var(--text-secondary); font-weight: 500;
+}
+.filter-tag:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.filter-tag.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 6px rgba(45,157,139,0.35); }
+.filter-tag.active .tag-dot { background: #fff !important; box-shadow: none; }
+.filter-tag.highlighted { background: #FFF3CD; color: #856404; border-color: #FFC107; box-shadow: 0 2px 8px rgba(255,193,7,0.4); font-weight: 600; }
+.filter-tag.highlighted .tag-dot { box-shadow: 0 0 0 1.5px rgba(133,100,4,0.25) inset; }
+.filter-tag.highlighted.active { background: linear-gradient(135deg, var(--primary), #FFC107); color: #fff; }
+.filter-tag.highlighted.active .tag-dot { background: #fff !important; box-shadow: none; }
+.filter-group-item {
+  padding: 6px 10px; font-size: 13px; cursor: pointer;
+  border-radius: 6px; margin-bottom: 2px;
+  display: flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  transition: all 0.12s;
+}
+.filter-group-item:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+.filter-group-item.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: 600; }
+.filter-group-item .filter-group-mode { font-size: 10px; color: inherit; margin-left: auto; opacity: 0.7; }
+
+/* ========== 拖拽打标签 ========== */
+.filter-tag[draggable="true"] { cursor: grab; }
+.filter-tag[draggable="true"]:active { cursor: grabbing; }
+.filter-tag.dragging { opacity: 0.4; transform: scale(0.92); }
+.file-row.drag-over {
+  background: #E8F5E9 !important;
+  border: 2px dashed var(--primary);
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px rgba(45,157,139,0.12);
+}
+.file-area.drag-active .file-list::before {
+  content: '↓ 拖拽标签到文件行打标签 ↓';
+  display: block; text-align: center; padding: 6px;
+  font-size: 12px; color: var(--primary); font-weight: 600;
+  background: rgba(45,157,139,0.06); border-bottom: 1px dashed var(--primary);
+  animation: pulse-hint 1.5s ease-in-out infinite;
+}
+@keyframes pulse-hint { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+/* ========== 扩展名筛选栏 ========== */
+.ext-filter-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 16px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0; flex-wrap: wrap;
+}
+.ext-filter-bar .ext-label { font-size: 12px; color: var(--text-muted); margin-right: 2px; white-space: nowrap; }
+.ext-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 14px; font-size: 12px;
+  cursor: pointer; border: 1px solid var(--border-strong);
+  background: var(--card); color: var(--text-secondary); font-weight: 500;
+  transition: all 0.15s; white-space: nowrap;
+}
+.ext-chip:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.ext-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 6px rgba(45,157,139,0.35); }
+.ext-chip.highlighted { background: #FFF3CD; color: #856404; border-color: #FFC107; box-shadow: 0 2px 8px rgba(255,193,7,0.4); font-weight: 600; }
+.ext-chip.highlighted.active { background: linear-gradient(135deg, var(--primary), #FFC107); color: #fff; }
+.ext-chip .ext-icon { font-size: 13px; }
+/* 路径筛选栏 */
+.path-filter-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 16px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0; flex-wrap: wrap;
+}
+.path-filter-bar .path-label { font-size: 12px; color: var(--text-muted); margin-right: 2px; white-space: nowrap; }
+.path-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 14px; font-size: 12px;
+  cursor: pointer; border: 1px solid var(--border-strong);
+  background: var(--card); color: var(--text-secondary); font-weight: 500;
+  transition: all 0.15s; white-space: nowrap; max-width: 300px;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.path-chip:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.path-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 6px rgba(45,157,139,0.35); }
+/* 来源筛选栏 */
+.source-filter-bar { display: flex; align-items: center; gap: 6px; padding: 4px 16px; background: var(--card); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.source-label { font-size: 12px; color: var(--text-muted); margin-right: 2px; white-space: nowrap; }
+.source-chip { padding: 3px 10px; border-radius: 14px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-strong); background: var(--card); color: var(--text-secondary); font-weight: 500; transition: all 0.15s; }
+.source-chip:hover { border-color: var(--primary); color: var(--primary); }
+.source-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.source-badge { font-size: 11px; margin-right: 2px; flex-shrink: 0; }
+/* 设置面板中的扫描过滤扩展名 chip */
+.filter-ext-chip {
+  display: inline-flex; align-items: center;
+  padding: 3px 10px; border-radius: 14px; font-size: 12px;
+  border: 1px solid #D6BCFA; background: #FAF5FF; color: #6B46C1;
+  cursor: default; transition: all 0.15s;
+}
+.filter-ext-chip:hover { background: #E9D8FD; }
+.btn-clear-filter {
+  margin-left: auto; padding: 3px 12px; font-size: 12px;
+  border: 1px solid #FED7D7; background: #FFF5F5; color: var(--danger);
+  border-radius: 14px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.btn-clear-filter:hover { background: #FED7D7; }
+
+/* ========== 分组快捷筛选栏 ========== */
+.group-filter-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, #eef2ff 0%, #e6edff 100%);
+  border-bottom: 1px solid var(--border-strong);
+  flex-shrink: 0; flex-wrap: wrap;
+}
+.group-filter-bar .group-label { font-size: 12px; color: var(--text-muted); margin-right: 2px; white-space: nowrap; font-weight: 600; }
+.group-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 12px; border-radius: 16px; font-size: 12px;
+  cursor: pointer; border: 1.5px solid #D6BCFA; background: #F3E8FF;
+  color: #6B21A8; transition: all 0.15s; white-space: nowrap; font-weight: 500;
+}
+.group-chip:hover { border-color: #9333EA; background: #E9D5FF; color: #581C87; }
+.group-chip.active { background: #7C3AED; color: #fff; border-color: #7C3AED; box-shadow: 0 2px 8px rgba(124,58,237,0.4); }
+.group-chip.highlighted { background: #FFF3CD; color: #856404; border: 1.5px solid #FFC107; box-shadow: 0 2px 8px rgba(255,193,7,0.4); font-weight: 600; }
+.group-chip.highlighted.active { background: linear-gradient(135deg, #7C3AED, #FFC107); color: #fff; }
+.group-chip .group-mode-tag { font-size: 10px; opacity: 0.7; }
+.group-empty { font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+/* ========== 文件列表区域 ========== */
+.file-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.file-header {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
+  display: flex; align-items: center; gap: 12px;
+  font-size: 13px; flex-shrink: 0;
+}
+.file-header .count { color: var(--text-secondary); font-size: 12px; }
+.file-header .sort-select {
+  padding: 4px 8px; border: 1px solid var(--border);
+  border-radius: 6px; font-size: 12px; background: #F7FAFC;
+  outline: none; cursor: pointer;
+}
+.file-list { flex: 1; overflow-y: auto; padding: 0; }
+.file-list::-webkit-scrollbar { width: 6px; }
+.file-list::-webkit-scrollbar-thumb { background: #D0D5DD; border-radius: 3px; }
+
+/* ========== 文件行 ========== */
+.file-row {
+  display: flex; align-items: center;
+  padding: 9px 16px;
+  border-bottom: 1px solid #E9EDF3;
+  cursor: pointer; transition: background 0.1s; gap: 10px;
+}
+.file-row:hover { background: #F2F6FF; }
+.file-row.selected { background: var(--primary-light); }
+.file-check { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; accent-color: var(--primary); }
+.file-icon { font-size: 18px; flex-shrink: 0; width: 26px; text-align: center; }
+.file-name { flex: 1; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-row.tag-highlighted { background: #FFFBF0; }
+.file-row.tag-highlighted .file-name { color: #B8860B; font-weight: 700; }
+.file-row.tag-highlighted:hover { background: #FFF8E1; }
+/* Jump flash: bright yellow for ~3s, then fade to normal */
+.file-row.flash-highlight { animation: file-flash 4s ease-out forwards; }
+@keyframes file-flash {
+  0%   { background: #FEF3C7; }
+  70%  { background: #FEF3C7; }
+  100% { background: transparent; }
+}
+.file-path { font-size: 11px; color: var(--text-muted); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+.file-tags { display: flex; gap: 4px; flex-shrink: 0; flex-wrap: nowrap; }
+.file-tag-badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; white-space: nowrap; font-weight: 500; }
+.file-size { font-size: 12px; color: var(--text-muted); flex-shrink: 0; width: 72px; text-align: right; }
+.file-mtime { font-size: 12px; color: var(--text-muted); flex-shrink: 0; width: 130px; text-align: right; }
+.file-links { display: flex; flex-direction: row; flex-wrap: wrap; gap: 3px; align-items: flex-start; flex-shrink: 0; max-width: 170px; }
+
+/* ========== 文件行内备注 ========== */
+.file-entry { position: relative; }
+/* 空备注触发按钮：文件行右侧的小图标 */
+.file-note-trigger {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; flex-shrink: 0;
+  font-size: 14px; cursor: pointer; border-radius: 6px;
+  opacity: 0.3; transition: all 0.15s;
+}
+.file-note-trigger:hover { opacity: 0.9; background: rgba(249,168,37,0.12); }
+/* 行内备注标签 */
+.file-note-inline {
+  position: relative; display: inline-flex; align-items: center; gap: 3px;
+  flex-shrink: 0; max-width: 160px; cursor: pointer;
+  padding: 2px 7px; border-radius: 5px; font-size: 12px;
+  background: rgba(249,168,37,0.10); border: 1px solid rgba(249,168,37,0.25);
+  color: #8B6914; transition: all 0.15s; line-height: 1.4;
+}
+.file-note-inline:hover {
+  background: rgba(249,168,37,0.18); border-color: rgba(249,168,37,0.45);
+}
+.file-note-inline .note-icon { font-size: 12px; flex-shrink: 0; }
+.file-note-inline .note-preview {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* 悬浮提示框（hover 时显示完整备注） */
+.file-note-tooltip {
+  display: none; position: fixed;
+  min-width: 220px; max-width: 420px;
+  padding: 12px 16px; z-index: 9999;
+  background: linear-gradient(135deg, #FFFDF5 0%, #FFF8E1 100%);
+  border: 1.5px solid #F9A825; border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(249,168,37,0.28), 0 2px 8px rgba(0,0,0,0.12);
+  font-size: 14px; line-height: 1.6; color: #5D4037;
+  word-break: break-word; white-space: pre-wrap;
+  pointer-events: none;
+}
+.file-note-tooltip.visible { display: block; }
+/* 箭头 - 默认在下方（tooltip 在触发器上方） */
+.file-note-tooltip::after {
+  content: ''; position: absolute; top: 100%; left: 20px;
+  width: 0; height: 0;
+  border-left: 8px solid transparent; border-right: 8px solid transparent;
+  border-top: 8px solid #F9A825;
+}
+/* tooltip 在触发器下方时，箭头翻到上方 */
+.file-note-tooltip.below::after {
+  top: auto; bottom: 100%;
+  border-top: none;
+  border-bottom: 8px solid #F9A825;
+}
+/* 编辑态 */
+.file-note-inline.edit-mode {
+  max-width: 300px; background: var(--card); border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(45,157,139,0.12);
+}
+.file-note-inline.edit-mode .note-preview { display: none; }
+.file-note-inline.edit-mode .file-note-tooltip { display: none !important; }
+.file-note-edit {
+  width: 100%; min-height: 28px; max-height: 120px;
+  border: none; outline: none; resize: vertical;
+  font-size: 13px; padding: 2px 4px; font-family: inherit; line-height: 1.5;
+  background: transparent; color: var(--text); border-radius: 4px;
+}
+
+/* ========== 分页 ========== */
+.pagination {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px; background: var(--card);
+  border-top: 1px solid var(--border); flex-shrink: 0;
+}
+.pagination button {
+  padding: 5px 14px; border: 1px solid var(--border);
+  background: var(--card); border-radius: 6px;
+  cursor: pointer; font-size: 12px; transition: all 0.12s;
+}
+.pagination button:hover:not(:disabled) { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+.pagination button:disabled { opacity: 0.35; cursor: default; }
+.pagination .page-info { font-size: 12px; color: var(--text-secondary); }
+
+/* ========== 右键菜单 ========== */
+.context-menu {
+  position: fixed; background: var(--card);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-lg); padding: 4px 0;
+  z-index: 1000; min-width: 180px; display: none;
+}
+.context-menu-item { padding: 8px 16px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.1s; }
+.context-menu-item:hover { background: var(--primary-light); color: var(--primary); }
+.context-menu-separator { height: 1px; background: var(--border); margin: 4px 0; }
+
+/* ========== 模态框 ========== */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45); backdrop-filter: blur(2px);
+  z-index: 2000; display: none; justify-content: center; align-items: flex-start;
+  padding-top: 60px; overflow-y: auto;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--card); border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  width: 90%; max-width: 720px;
+  max-height: calc(100vh - 120px); overflow-y: auto;
+  animation: modalIn 0.2s ease-out;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.modal-header {
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; background: var(--card); z-index: 1;
+  border-radius: 14px 14px 0 0;
+}
+.modal-header h3 { font-size: 16px; font-weight: 700; color: var(--text); }
+.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); padding: 4px 8px; border-radius: 6px; transition: all 0.12s; }
+.modal-close:hover { background: #F7FAFC; color: var(--text); }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ========== 标签选择面板（打标签用） ========== */
+.tag-panel-dimension { margin-bottom: 18px; }
+.tag-panel-dimension-title {
+  font-size: 13px; font-weight: 700; color: var(--text);
+  margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+}
+.tag-panel-dimension-title::before { content: "▍"; color: var(--primary); font-size: 14px; }
+.tag-panel-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag-panel-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 14px; border-radius: 16px; font-size: 12px; cursor: pointer;
+  border: 1.5px solid var(--border-strong); background: var(--card);
+  transition: all 0.15s; color: var(--text-secondary); font-weight: 500;
+}
+.tag-panel-tag:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.tag-panel-tag.selected { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 8px rgba(45,157,139,0.35); }
+.tag-panel-tag.selected .tag-dot { background: #fff !important; box-shadow: none; }
+
+/* ========== 设置面板 ========== */
+.settings-section { margin-bottom: 28px; }
+.settings-section h4 { font-size: 15px; font-weight: 700; margin-bottom: 14px; color: var(--text); padding-bottom: 8px; border-bottom: 2px solid var(--primary-light); }
+.settings-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.settings-table th {
+  text-align: left; padding: 8px 12px;
+  background: #F7FAFC; border-bottom: 2px solid var(--border);
+  font-weight: 600; color: var(--text-secondary); font-size: 12px;
+}
+.settings-table td { padding: 7px 12px; border-bottom: 1px solid #F7FAFC; }
+.settings-table input[type="text"] {
+  padding: 5px 8px; border: 1px solid var(--border);
+  border-radius: 6px; font-size: 13px; width: 100%; outline: none;
+  transition: border-color 0.15s;
+}
+.settings-table input[type="text"]:focus { border-color: var(--primary); }
+.settings-color { width: 32px; height: 24px; padding: 0; border: 2px solid var(--border); border-radius: 4px; cursor: pointer; }
+
+/* ========== 分组管理 ========== */
+.group-card {
+  margin-bottom: 14px; padding: 14px;
+  background: #F7FAFC; border-radius: var(--radius);
+  border: 1px solid var(--border);
+  transition: box-shadow 0.15s;
+}
+.group-card:hover { box-shadow: var(--shadow); }
+.group-mode-toggle {
+  display: flex; gap: 0; margin-bottom: 8px;
+  border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; width: fit-content;
+}
+.group-mode-toggle button {
+  padding: 5px 14px; font-size: 12px; border: none;
+  background: transparent; cursor: pointer; transition: all 0.15s; font-weight: 500;
+}
+.group-mode-toggle button.active { background: var(--primary); color: #fff; }
+.group-logic-toggle {
+  display: flex; gap: 0; margin-bottom: 8px;
+  border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; width: fit-content;
+}
+.group-logic-toggle button {
+  padding: 5px 14px; font-size: 12px; border: none;
+  background: transparent; cursor: pointer; transition: all 0.15s; font-weight: 500;
+}
+.group-logic-toggle button.active { background: var(--success); color: #fff; }
+.expression-textarea {
+  width: 100%; min-height: 64px; padding: 8px 10px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 13px; font-family: 'Fira Code', 'Consolas', monospace;
+  resize: vertical; outline: none; transition: border-color 0.15s;
+  background: #FAFBFC;
+}
+.expression-textarea:focus { border-color: var(--primary); background: #fff; }
+.expression-help { font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.7; }
+.expression-result { font-size: 12px; margin-top: 6px; padding: 6px 10px; border-radius: 6px; }
+.expression-result.ok { background: #E8F5E9; color: #2E7D32; }
+.expression-result.err { background: #FFEBEE; color: #C62828; }
+
+/* ========== 按钮统一 ========== */
+.btn { padding: 7px 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); box-shadow: 0 2px 8px rgba(74,144,217,0.35); }
+.btn-secondary { background: #EDF2F7; color: var(--text-secondary); }
+.btn-secondary:hover { background: #E2E8F0; }
+.btn-danger { background: #FFF5F5; color: var(--danger); }
+.btn-danger:hover { background: #FED7D7; }
+
+/* ========== Toast ========== */
+.toast {
+  position: fixed; top: 20px; right: 20px;
+  padding: 10px 20px; border-radius: 10px;
+  background: #333; color: #fff; font-size: 13px;
+  z-index: 3000; opacity: 0; transition: opacity 0.3s;
+  pointer-events: none; box-shadow: var(--shadow-lg);
+}
+.toast.show { opacity: 1; }
+
+/* ========== 扫描进度 ========== */
+.scan-progress {
+  position: fixed; bottom: 20px; right: 20px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; box-shadow: var(--shadow-lg);
+  padding: 16px 20px; z-index: 1500; min-width: 300px; display: none;
+}
+.scan-progress.active { display: block; animation: slideUp 0.3s ease-out; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.progress-bar { width: 100%; height: 6px; background: #EDF2F7; border-radius: 3px; margin-top: 10px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #764ba2); border-radius: 3px; transition: width 0.3s; width: 0; }
+
+/* ========== 空状态 ========== */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px; color: var(--text-muted); font-size: 14px;
+}
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+</style>
+</head>
+<body>
+
+<!-- 顶部工具栏 -->
+<div class="toolbar">
+  <span class="toolbar-title">📌 文件标签</span>
+  <span class="toolbar-version" id="versionInfo" title="点击查看更新记录" style="cursor:pointer;">v--</span>
+  <input type="text" id="searchInput" class="search-box" placeholder="搜索文件名或路径...">
+  <button type="button" class="btn btn-primary" onclick="startScan()">📁 扫描</button>
+  <button type="button" class="btn btn-secondary" onclick="openSettings()">⚙ 设置</button>
+  <button type="button" class="btn btn-secondary" onclick="exportCSV()" title="导出当前文件列表为 CSV">📥 导出</button>
+  <span class="toolbar-info" id="scanTimeInfo">上次扫描：--</span>
+  <button class="skin-toggle" id="skinToggle" onclick="cycleSkin()" title="切换皮肤">🎨</button>
+  <span class="toolbar-info" id="selectedInfo"></span>
+</div>
+
+<!-- 主布局 -->
+<div class="main">
+  <!-- 左侧筛选面板 -->
+  <div class="filter-panel" id="filterPanel">
+    <div class="filter-panel-header">
+      <span>🏷️ 标签筛选</span>
+      <span class="filter-panel-count" id="filterPanelCount">--</span>
+    </div>
+    <div id="filterDimensions"></div>
+  </div>
+
+  <!-- 文件列表 -->
+  <div class="file-area">
+    <!-- 扩展名筛选栏 -->
+    <div class="ext-filter-bar" id="extFilterBar">
+      <span class="ext-label">类型：</span>
+      <button type="button" class="btn-clear-filter" onclick="clearAllFilters()">✕ 清除筛选</button>
+    </div>
+    <!-- 分组快捷筛选栏 -->
+    <div class="group-filter-bar" id="groupFilterBar">
+      <span class="group-label">📦 快捷分组：</span>
+      <span class="group-empty">暂无分组，请在设置中添加</span>
+    </div>
+    <!-- 路径筛选栏 -->
+    <div class="path-filter-bar" id="pathFilterBar" style="display:none;">
+      <span class="path-label">📂 路径：</span>
+    </div>
+    <!-- 来源筛选栏 -->
+    <div class="source-filter-bar">
+      <span class="source-label">来源：</span>
+      <span class="source-chip active" data-source="" onclick="toggleSourceFilter(this, '')">全部</span>
+      <span class="source-chip" data-source="local" onclick="toggleSourceFilter(this, 'local')">💻 本地</span>
+      <span class="source-chip" data-source="feishu" onclick="toggleSourceFilter(this, 'feishu')">🔷 飞书</span>
+    </div>
+    <div class="file-header">
+      <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+      <span class="count" id="fileCount">共 0 个文件</span>
+      <span style="margin-left:auto">
+        排序：<select class="sort-select" id="sortSelect" onchange="loadFiles()">
+          <option value="modified_time-desc">修改时间 ↓</option>
+          <option value="modified_time-asc">修改时间 ↑</option>
+          <option value="file_name-asc">文件名 A→Z</option>
+          <option value="file_name-desc">文件名 Z→A</option>
+          <option value="file_size-desc">大小 ↓</option>
+          <option value="file_size-asc">大小 ↑</option>
+        </select>
+      </span>
+    </div>
+    <div class="file-list" id="fileList">
+      <div class="empty-state"><div class="empty-icon">📂</div>点击「扫描」按钮开始扫描文件</div>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</div>
+
+<!-- 右键菜单 -->
+<div class="context-menu" id="contextMenu">
+  <div class="context-menu-item" onclick="cmdTagFiles()">🏷️ 打标签</div>
+  <div class="context-menu-item" onclick="cmdOpenFile()">📂 打开文件</div>
+  <div class="context-menu-item" onclick="cmdShowFile()">📍 打开所在文件夹</div>
+  <div class="context-menu-separator"></div>
+  <div class="context-menu-item" onclick="cmdViewProps()">ℹ️ 查看属性</div>
+  <div class="context-menu-separator"></div>
+  <div class="context-menu-item" onclick="cmdBatchTag()">✅ 批量打标签</div>
+  <div class="context-menu-item" onclick="cmdRemoveFiles()">🗑️ 移除记录</div>
+</div>
+
+<!-- 通用高亮右键菜单 -->
+<div class="context-menu" id="tagContextMenu">
+  <div class="context-menu-item" id="tagCtxHighlight">⭐ 高亮</div>
+  <div class="context-menu-item" id="tagCtxUnhighlight" style="display:none;">⊘ 取消高亮</div>
+  <div class="context-menu-separator" id="tagCtxSep" style="display:none;"></div>
+  <div class="context-menu-item" id="tagCtxDelete" style="display:none;">🗑️ 删除</div>
+</div>
+
+<!-- 打标签模态框 -->
+<div class="modal-overlay" id="tagModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="tagModalTitle">打标签</h3>
+      <button type="button" class="modal-close" onclick="closeTagModal()">×</button>
+    </div>
+    <div class="modal-body" id="tagModalBody"></div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeTagModal()">取消</button>
+      <button type="button" class="btn btn-primary" onclick="applyTags()">应用</button>
+    </div>
+  </div>
+</div>
+
+<!-- 文件属性模态框 -->
+<div class="modal-overlay" id="propsModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <h3>文件属性</h3>
+      <button type="button" class="modal-close" onclick="closePropsModal()">×</button>
+    </div>
+    <div class="modal-body" id="propsModalBody"></div>
+  </div>
+</div>
+
+<!-- 设置模态框 -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal" style="max-width:780px;">
+    <div class="modal-header">
+      <h3>⚙ 设置</h3>
+      <button type="button" class="modal-close" onclick="closeSettings()">×</button>
+    </div>
+    <div class="modal-body" id="settingsModalBody"></div>
+  </div>
+</div>
+
+<!-- Changelog Modal -->
+<div class="modal-overlay" id="changelogModal" style="display:none;">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <h3>📋 更新记录</h3>
+      <button type="button" class="modal-close" onclick="document.getElementById('changelogModal').style.display='none'">×</button>
+    </div>
+    <div class="modal-body" id="changelogModalBody" style="max-height:60vh;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- 扫描进度 -->
+<div class="scan-progress" id="scanProgress">
+  <div style="font-size:14px; font-weight:600;">正在扫描...</div>
+  <div style="font-size:12px; color:#666; margin-top:4px;" id="scanProgressText">准备中...</div>
+  <div class="progress-bar"><div class="progress-bar-fill" id="scanProgressBar"></div></div>
+</div>
+
+<!-- 新增文件弹窗 -->
+<div class="modal-overlay" id="newFilesModal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <h3 id="newFilesTitle">📥 新增文件</h3>
+      <button type="button" class="modal-close" onclick="closeNewFilesModal()">×</button>
+    </div>
+    <div class="modal-body" id="newFilesBody" style="max-height:60vh;overflow-y:auto;"></div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-primary" onclick="closeNewFilesModal()">知道了</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+let state = {
+  page: 1, pageSize: 50,
+  activeTagIds: [], activeGroupId: null, activeExts: [], activePathPrefixes: [],
+  activeSource: '',
+  selectedFileIds: [], dimensions: [], tags: [], groups: [],
+  highlightedTagIds: [], highlightedExts: [], highlightedGroupIds: [],
+};
+
+// ==================== API 调用 ====================
+async function api(url, opts = {}) {
+  try {
+    const res = await fetch(API + url, opts);
+    if (!res.ok) { const t = await res.text().catch(()=>''); throw new Error(`HTTP ${res.status}` + (t ? `: ${t.slice(0,100)}` : '')); }
+    return await res.json();
+  } catch (e) {
+    console.error('API 请求失败:', url, e);
+    if (!url.includes('/scan/status')) showToast('请求失败：' + e.message);
+    throw e;
+  }
+}
+
+// ==================== 工具函数 ====================
+function escHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function toggleSection(el) {
+  el.classList.toggle('collapsed');
+  const c = el.nextElementSibling;
+  c.style.display = c.style.display === 'none' ? '' : 'none';
+}
+
+// ==================== 扫描 ====================
+async function startScan() {
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '⏳ 扫描中...';
+  try {
+    const r = await api('/scan/start', { method: 'POST' });
+    pollScan(r.taskId, btn);
+  } catch(e) { showToast('扫描启动失败'); btn.disabled = false; btn.textContent = '📁 扫描'; }
+}
+
+async function pollScan(taskId, btn) {
+  const prog = document.getElementById('scanProgress');
+  prog.classList.add('active');
+  const bar = document.getElementById('scanProgressBar');
+  const txt = document.getElementById('scanProgressText');
+  const poll = async () => {
+    const r = await api(`/scan/status/${taskId}`);
+    const pct = r.total > 0 ? Math.round(r.processed / r.total * 100) : 0;
+    bar.style.width = pct + '%';
+    if (r.message) {
+      txt.textContent = `${r.message} (已处理 ${r.processed} 个)`;
+    } else {
+      txt.textContent = `已处理 ${r.processed} / ${r.total} 个文件（${pct}%）`;
+    }
+    if (r.status === 'done') {
+      prog.classList.remove('active');
+      btn.disabled = false; btn.textContent = '📁 扫描';
+      const msg = [`新增 ${r.added}`, `移除 ${r.removed}`];
+      showToast(`扫描完成！${msg.join('，')}`);
+      loadFiles(); loadFilterData();
+      const lt = await api('/scan/last-time');
+      document.getElementById('scanTimeInfo').textContent = '上次扫描：' + (lt.lastTime ? new Date(lt.lastTime).toLocaleString('zh-CN') : '--');
+      // 显示新增文件
+      if (r.new_files && r.new_files.length > 0) {
+        showNewFilesModal(r.new_files);
+      }
+    } else if (r.status === 'error') {
+      prog.classList.remove('active');
+      btn.disabled = false; btn.textContent = '📁 扫描';
+      showToast(r.error || '扫描失败');
+    } else { setTimeout(poll, 500); }
+  };
+  poll();
+}
+
+// ==================== 加载文件列表 ====================
+async function loadFiles() {
+  const params = new URLSearchParams();
+  const keyword = document.getElementById('searchInput').value;
+  if (keyword) params.set('keyword', keyword);
+  if (state.activeTagIds.length > 0) params.set('tag_ids', state.activeTagIds.join(','));
+  if (state.activeGroupId) params.set('group_id', state.activeGroupId);
+  if (state.activeExts.length > 0) params.set('ext', state.activeExts.join(','));
+  if (state.activePathPrefixes.length > 0) params.set('path_prefix', state.activePathPrefixes.join(','));
+  if (state.activeSource) params.set('source', state.activeSource);
+  const sortVal = document.getElementById('sortSelect').value;
+  const [sort, order] = sortVal.split('-');
+  params.set('sort', sort); params.set('order', order);
+  params.set('page', state.page); params.set('page_size', state.pageSize);
+  const r = await api('/files?' + params.toString());
+  state.page = r.page;
+  // 加载任务链接索引（一次性），用于反向链接展示
+  try {
+    const cl = await api('/content-links');
+    const list = Array.isArray(cl) ? cl : (cl.links || []);
+    const map = {};
+    list.forEach(lk => {
+      const key = (lk.path || '').replace(/\\/g, '/').toLowerCase();
+      if (!key) return;
+      (map[key] = map[key] || []).push(lk);
+    });
+    window._contentLinksMap = map;
+  } catch (e) { window._contentLinksMap = {}; }
+  renderFileList(r.data);
+  state.currentFiles = r.data;
+  renderPagination(r.page, Math.ceil(r.total / state.pageSize));
+  document.getElementById('fileCount').textContent = `共 ${r.total} 个文件`;
+}
+
+function renderFileList(files) {
+  const container = document.getElementById('fileList');
+  if (files.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">😶</div>没有匹配的文件</div>';
+    return;
+  }
+  const extIcons = { pdf:'📄', doc:'📝', docx:'📝', xls:'📊', xlsx:'📊', ppt:'📽', pptx:'📽', txt:'📃', jpg:'🖼️', png:'🖼️', zip:'📦', rar:'📦', mp4:'🎬', mp3:'🎵', exe:'⚙️', default:'📄' };
+  const feishuTypeIcons = { doc:'📄', docx:'📄', sheet:'📊', bitable:'🗂️', mindnote:'🧠', slides:'📽️', file:'📎', folder:'📁', wiki:'📚', shortcut:'🔗', catalog:'📑', apps:'⚙️', default:'🔷' };
+  container.innerHTML = files.map(f => {
+    const isFeishu = f.source === 'feishu';
+    const ext = f.file_name.includes('.') ? f.file_name.split('.').pop().toLowerCase() : '';
+    const icon = isFeishu
+      ? (feishuTypeIcons[f.cloud_type] || feishuTypeIcons.default)
+      : (f.is_folder ? '📁' : (extIcons[ext] || extIcons.default));
+    const sourceBadge = isFeishu
+      ? '<span class="source-badge feishu" title="飞书云文档">🔷</span>'
+      : '<span class="source-badge local" title="本地文件">💻</span>';
+    const pathDisplay = isFeishu ? (f.folder_path || '飞书云盘') : f.file_path;
+    const sel = state.selectedFileIds.includes(f.id);
+    const fileTagIds = (f.tags || []).map(t => t.id);
+    // 检查三种高亮：标签、扩展名、分组
+    let isHighlighted = false;
+    if (state.highlightedTagIds.length > 0 && state.highlightedTagIds.some(id => fileTagIds.includes(id))) isHighlighted = true;
+    if (state.highlightedExts.length > 0 && state.highlightedExts.includes(ext)) isHighlighted = true;
+    if (state.highlightedGroupIds.length > 0) {
+      isHighlighted = isHighlighted || state.highlightedGroupIds.some(gid => {
+        const grp = state.groups.find(g => g.id === gid);
+        if (!grp || !grp.tags || grp.tags.length === 0) return false;
+        const gtagIds = grp.tags.map(t => t.id);
+        if (grp.logic === 'and') return gtagIds.every(id => fileTagIds.includes(id));
+        return gtagIds.some(id => fileTagIds.includes(id));
+      });
+    }
+    const tagsHtml = (f.tags || []).map(t => {
+      const hl = state.highlightedTagIds.includes(t.id);
+      const style = hl
+        ? `background:${t.color};color:#fff;border:1px solid ${t.color};font-weight:700;`
+        : `background:${t.color}22;color:${t.color};border:1px solid ${t.color}33;`;
+      return `<span class="file-tag-badge" style="${style}">${escHtml(t.dimension_name)}:${escHtml(t.name)}</span>`;
+    }).join('');
+    const sizeStr = isFeishu ? '--' : (f.file_size > 1048576 ? (f.file_size/1048576).toFixed(1)+'MB' : f.file_size > 1024 ? (f.file_size/1024).toFixed(1)+'KB' : f.file_size+'B');
+    const mtimeStr = f.modified_time ? new Date(f.modified_time).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    // 关联任务（反向链接）
+    const key = (f.file_path || '').replace(/\\/g, '/').toLowerCase();
+    const linked = (window._contentLinksMap && window._contentLinksMap[key]) || [];
+    const linkedHtml = linked.length > 0
+      ? linked.map(l => `<div class="file-link-chip" title="点击跳转：${escHtml(l.blockTitle)}" style="display:inline-block;cursor:pointer;background:linear-gradient(135deg,#EEF2FF,#E0E7FF);color:#4338CA;padding:2px 8px;border-radius:6px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;border:1px solid #C7D2FE;transition:all 0.15s;" onmouseover="this.style.background='linear-gradient(135deg,#4338CA,#6366F1)';this.style.color='#fff';this.style.borderColor='#4338CA';this.style.transform='translateY(-1px)';this.style.boxShadow='0 2px 8px rgba(67,56,202,0.25)'" onmouseout="this.style.background='linear-gradient(135deg,#EEF2FF,#E0E7FF)';this.style.color='#4338CA';this.style.borderColor='#C7D2FE';this.style.transform='';this.style.boxShadow=''" onclick="event.stopPropagation();window.open('http://localhost:8080?task='+encodeURIComponent(${l.blockId}),'task-lens-window')">📋 ${escHtml(l.blockTitle)}</div>`).join('')
+      : '<span style="color:var(--gray-300);font-size:11px;">-</span>';
+    const noteText = f.note || '';
+    const notePreview = noteText.length > 20 ? noteText.substring(0, 20) + '...' : noteText;
+    const noteHtml = noteText
+      ? `<span class="file-note-inline" onmouseenter="showNoteTooltip(this, ${f.id})" onmouseleave="hideNoteTooltip(this)" onclick="event.stopPropagation();startNoteEdit(event, ${f.id}, this)">
+           <span class="note-icon">📝</span>
+           <span class="note-preview">${escHtml(notePreview)}</span>
+           <span class="file-note-tooltip">${escHtml(noteText)}</span>
+         </span>`
+      : `<span class="file-note-trigger" title="添加备注" onclick="event.stopPropagation();startNoteEdit(event, ${f.id}, this)">💬</span>`;
+    return `<div class="file-entry" data-id="${f.id}">
+      <div class="file-row ${sel?'selected':''} ${isHighlighted?'tag-highlighted':''}" data-id="${f.id}" data-file-path="${escHtml(f.file_path)}" data-file-name="${escHtml(f.file_name)}" oncontextmenu="showContextMenu(event,${f.id})" onclick="toggleFileSelect(${f.id}, event)" ondragover="onFileDragOver(event,${f.id})" ondragleave="onFileDragLeave(event)" ondrop="onFileDrop(event,${f.id})">
+      <input type="checkbox" class="file-check" ${sel?'checked':''} onchange="toggleFileSelect(${f.id}, event)">
+      <span class="file-icon">${icon}</span>
+      ${sourceBadge}
+      <span class="file-name" title="${escHtml(f.file_name)}">${escHtml(f.file_name)}</span>
+      <span class="file-links">${linkedHtml}</span>
+      <span class="file-path" title="${escHtml(pathDisplay)}">${escHtml(pathDisplay)}</span>
+      <span class="file-tags">${tagsHtml}</span>
+      ${noteHtml}
+      <span class="file-size">${sizeStr}</span>
+      <span class="file-mtime">${mtimeStr}</span>
+    </div></div>`;
+  }).join('');
+}
+
+// ==================== 文件选择 ====================
+function toggleFileSelect(id, event) { event.stopPropagation(); const idx = state.selectedFileIds.indexOf(id); if (idx>=0) state.selectedFileIds.splice(idx,1); else state.selectedFileIds.push(id); renderSelectedInfo(); }
+function toggleSelectAll() {
+  const rows = document.querySelectorAll('.file-row');
+  if (document.getElementById('selectAll').checked) {
+    state.selectedFileIds = [];
+    rows.forEach(r => { const id=Number(r.dataset.id); if(!state.selectedFileIds.includes(id)) state.selectedFileIds.push(id); });
+  } else { state.selectedFileIds=[]; }
+  renderSelectedInfo(); loadFiles();
+}
+function renderSelectedInfo() { document.getElementById('selectedInfo').textContent = state.selectedFileIds.length>0 ? `已选 ${state.selectedFileIds.length} 个` : ''; }
+
+// ==================== 右键菜单 ====================
+let contextFileId = null;
+function showContextMenu(event, fileId) {
+  event.preventDefault();
+  contextFileId = fileId;
+  if (!state.selectedFileIds.includes(fileId)) { state.selectedFileIds=[fileId]; renderSelectedInfo(); loadFiles(); }
+  const menu = document.getElementById('contextMenu');
+  menu.style.display='block'; menu.style.left=event.pageX+'px'; menu.style.top=event.pageY+'px';
+  document.addEventListener('click', hideContextMenu, {once:true});
+}
+function hideContextMenu() { document.getElementById('contextMenu').style.display='none'; }
+
+// 标签专用右键菜单（含删除）
+let tagCtxTarget = null;
+function showTagContextMenu(event, tagId, dimId, el) {
+  event.preventDefault();
+  event.stopPropagation();
+  tagCtxTarget = { tagId, dimId, el };
+  const menu = document.getElementById('tagContextMenu');
+  const isHighlighted = state.highlightedTagIds.includes(tagId);
+  document.getElementById('tagCtxHighlight').innerHTML = `⭐ 高亮此标签`;
+  document.getElementById('tagCtxHighlight').style.display = isHighlighted ? 'none' : 'flex';
+  document.getElementById('tagCtxUnhighlight').style.display = isHighlighted ? 'flex' : 'none';
+  document.getElementById('tagCtxSep').style.display = 'block';
+  document.getElementById('tagCtxDelete').style.display = 'flex';
+  menu.style.display = 'block';
+  menu.style.left = event.pageX + 'px';
+  menu.style.top = event.pageY + 'px';
+  document.addEventListener('click', hideTagContextMenu, {once:true});
+}
+
+// 通用高亮右键菜单（ext/group，不含删除）
+let highlightCtxTarget = null;
+function showHighlightContextMenu(event, type, id, el) {
+  event.preventDefault();
+  event.stopPropagation();
+  highlightCtxTarget = { type, id, el };
+  const menu = document.getElementById('tagContextMenu');
+  let isHighlighted = false;
+  const labelMap = { tag: '标签', ext: '扩展名', group: '分组' };
+  if (type === 'tag') isHighlighted = state.highlightedTagIds.includes(id);
+  else if (type === 'ext') isHighlighted = state.highlightedExts.some(e => String(id).split(',').includes(e));
+  else if (type === 'group') isHighlighted = state.highlightedGroupIds.includes(id);
+  document.getElementById('tagCtxHighlight').innerHTML = `⭐ 高亮此${labelMap[type]||''}`;
+  document.getElementById('tagCtxHighlight').style.display = isHighlighted ? 'none' : 'flex';
+  document.getElementById('tagCtxUnhighlight').style.display = isHighlighted ? 'flex' : 'none';
+  document.getElementById('tagCtxSep').style.display = 'none';
+  document.getElementById('tagCtxDelete').style.display = 'none';
+  menu.style.display = 'block';
+  menu.style.left = event.pageX + 'px';
+  menu.style.top = event.pageY + 'px';
+  document.addEventListener('click', hideTagContextMenu, {once:true});
+}
+function hideTagContextMenu() { document.getElementById('tagContextMenu').style.display='none'; }
+// 高亮状态持久化到后端（修复：高亮刷新即丢——原先只存前端内存）
+async function saveHighlightState() {
+  try {
+    await api('/highlight-state', {
+      method: 'POST',
+      body: JSON.stringify({
+        tag_ids: state.highlightedTagIds,
+        exts: state.highlightedExts,
+        group_ids: state.highlightedGroupIds,
+      }),
+      headers: {'Content-Type':'application/json'}
+    });
+  } catch(e) { console.warn('高亮状态保存失败（不影响本次操作）:', e.message); }
+}
+document.getElementById('tagCtxHighlight').addEventListener('click', function() {
+  const target = tagCtxTarget || highlightCtxTarget;
+  if (target) {
+    if (tagCtxTarget) {
+      const { tagId, el } = tagCtxTarget;
+      if (!state.highlightedTagIds.includes(tagId)) state.highlightedTagIds.push(tagId);
+      el.classList.add('highlighted');
+    } else if (highlightCtxTarget) {
+      const { type, id, el } = highlightCtxTarget;
+      if (type === 'tag') {
+        if (!state.highlightedTagIds.includes(id)) state.highlightedTagIds.push(id);
+      } else if (type === 'ext') {
+        String(id).split(',').forEach(e => { if (!state.highlightedExts.includes(e)) state.highlightedExts.push(e); });
+      } else if (type === 'group') {
+        if (!state.highlightedGroupIds.includes(id)) state.highlightedGroupIds.push(id);
+      }
+      el.classList.add('highlighted');
+    }
+    loadFiles();
+    showToast('已高亮');
+    saveHighlightState();
+  }
+  hideTagContextMenu();
+});
+document.getElementById('tagCtxUnhighlight').addEventListener('click', function() {
+  const target = tagCtxTarget || highlightCtxTarget;
+  if (target) {
+    if (tagCtxTarget) {
+      const { tagId, el } = tagCtxTarget;
+      state.highlightedTagIds = state.highlightedTagIds.filter(t => t !== tagId);
+      el.classList.remove('highlighted');
+    } else if (highlightCtxTarget) {
+      const { type, id, el } = highlightCtxTarget;
+      if (type === 'tag') {
+        state.highlightedTagIds = state.highlightedTagIds.filter(t => t !== id);
+      } else if (type === 'ext') {
+        const exts = String(id).split(',');
+        state.highlightedExts = state.highlightedExts.filter(e => !exts.includes(e));
+      } else if (type === 'group') {
+        state.highlightedGroupIds = state.highlightedGroupIds.filter(g => g !== id);
+      }
+      el.classList.remove('highlighted');
+    }
+    loadFiles();
+    showToast('已取消高亮');
+    saveHighlightState();
+  }
+  hideTagContextMenu();
+});
+// 删除标签（右键菜单）
+document.getElementById('tagCtxDelete').addEventListener('click', async function() {
+  if (!tagCtxTarget) return;
+  const { tagId } = tagCtxTarget;
+  // 修复：原文案"已打此标签的文件不受影响"与实际行为（级联移除所有文件上的该标签）相反
+  const tag = state.tags.find(t => t.id === tagId);
+  const tagName = tag ? tag.name : tagId;
+  const msg = `确定删除标签「${tagName}」？\n将同时移除所有文件上的该标签标记，且不可恢复。`;
+  if (!confirm(msg)) return;
+  try {
+    await api(`/tags/${tagId}`, { method: 'DELETE' });
+    showToast('标签已删除');
+    await loadFilterData();
+    if (state.highlightedTagIds.includes(tagId)) {
+      state.highlightedTagIds = state.highlightedTagIds.filter(t => t !== tagId);
+      saveHighlightState();
+    }
+  } catch(e) {
+    showToast('删除失败：' + e.message);
+  }
+  hideTagContextMenu();
+});
+async function cmdTagFiles() { const f=await api(`/files/${contextFileId}`); openTagModal([f.id], f.tags||[]); }
+async function cmdOpenFile() {
+  hideContextMenu();
+  try {
+    const r = await api(`/files/${contextFileId}/open`,{method:'POST'});
+    if (r.url) { window.open(r.url, '_blank'); }
+    else if (r.ok === false) { showToast(r.error || '打开失败'); }
+  } catch(e) { showToast('打开文件失败：' + e.message); }
+}
+async function cmdShowFile() {
+  hideContextMenu();
+  try {
+    const r = await api(`/files/${contextFileId}/show`,{method:'POST'});
+    if (r.url) { window.open(r.url, '_blank'); }
+    else if (r.ok === false) { showToast(r.error || '打开失败'); }
+  } catch(e) { showToast('打开文件夹失败：' + e.message); }
+}
+async function cmdViewProps() { const f=await api(`/files/${contextFileId}`); openPropsModal(f); }
+async function cmdBatchTag() { if(state.selectedFileIds.length===0)return; openTagModal(state.selectedFileIds,[]); }
+async function cmdRemoveFiles() {
+  if(!confirm(`确定从库中移除这 ${state.selectedFileIds.length} 个文件记录？`))return;
+  for(const id of state.selectedFileIds) await api(`/files/${id}`,{method:'DELETE'});
+  state.selectedFileIds=[]; renderSelectedInfo(); loadFiles(); loadFilterData();
+}
+
+// ==================== 文件属性 ====================
+async function openPropsModal(f) {
+  const tagsHtml=(f.tags||[]).map(t=>`<span class="file-tag-badge" style="background:${t.color}22;color:${t.color};border:1px solid ${t.color}33;">${escHtml(t.dimension_name)}:${escHtml(t.name)}</span>`).join(' ');
+  // 获取关联任务
+  let taskLinksHtml = '';
+  try {
+    const cl = await api('/content-links?path=' + encodeURIComponent(f.file_path));
+    const links = cl || [];
+    if (links.length > 0) {
+      taskLinksHtml = `<div style="margin-bottom:14px;"><b>🔗 关联任务 (${links.length})：</b><div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;">` +
+        links.map(l => `<span style="cursor:pointer;background:#EEF2FF;color:#4338CA;padding:4px 10px;border-radius:6px;font-size:12px;" onclick="event.stopPropagation();window.open('http://localhost:8080?task='+encodeURIComponent(${l.blockId}),'task-lens-window')" title="跳转到任务透视镜">📋 ${escHtml(l.blockTitle || '未命名任务')}</span>`).join('') +
+        `</div></div>`;
+    }
+  } catch(e) {}
+  const isFeishu = f.source === 'feishu';
+  const pathLabel = isFeishu ? '云盘位置' : '路径';
+  const pathValue = isFeishu ? (f.folder_path || '飞书云盘') : f.file_path;
+  const sizeStr = isFeishu ? '--（云文档）' : (f.file_size>1048576?(f.file_size/1048576).toFixed(2)+' MB':f.file_size>1024?(f.file_size/1024).toFixed(1)+' KB':f.file_size+' B');
+  const sourceLabel = isFeishu ? '🔷 飞书云文档' : '💻 本地文件';
+  const urlHtml = f.url ? `<div style="margin-bottom:14px;"><b>链接：</b><a href="${escHtml(f.url)}" target="_blank" style="color:var(--primary);">在浏览器中打开 ↗</a></div>` : '';
+  document.getElementById('propsModalBody').innerHTML=`
+    <div style="margin-bottom:14px;"><b>来源：</b>${sourceLabel}</div>
+    <div style="margin-bottom:14px;"><b>文件名：</b>${escHtml(f.file_name)}</div>
+    <div style="margin-bottom:14px;"><b>${pathLabel}：</b><span style="word-break:break-all;">${escHtml(pathValue)}</span></div>
+    ${urlHtml}
+    <div style="margin-bottom:14px;"><b>大小：</b>${sizeStr}</div>
+    <div style="margin-bottom:14px;"><b>修改时间：</b>${new Date(f.modified_time).toLocaleString('zh-CN')}</div>
+    <div style="margin-bottom:14px;"><b>标签：</b><div style="margin-top:6px;">${tagsHtml||'无'}</div></div>
+    ${taskLinksHtml}
+    <div style="margin-bottom:14px;"><b>备注：</b></div>
+    <textarea style="width:100%;min-height:60px;padding:8px;border:1px solid var(--border);border-radius:8px;outline:none;" onchange="updateFileNote(${f.id}, this.value)">${escHtml(f.note||'')}</textarea>`;
+  document.getElementById('propsModal').classList.add('active');
+}
+async function updateFileNote(id, note) { await api(`/files/${id}`,{method:'PUT',body:JSON.stringify({note}),headers:{'Content-Type':'application/json'}}); }
+function closePropsModal() { document.getElementById('propsModal').classList.remove('active'); }
+
+// ==================== 拖拽打标签 ====================
+let _dragTagId = null;
+
+function onTagDragStart(ev, tagId) {
+  _dragTagId = tagId;
+  ev.dataTransfer.effectAllowed = 'copy';
+  ev.dataTransfer.setData('text/plain', String(tagId));
+  ev.target.classList.add('dragging');
+  document.querySelector('.file-area')?.classList.add('drag-active');
+}
+
+function onTagDragEnd() {
+  _dragTagId = null;
+  document.querySelectorAll('.filter-tag.dragging').forEach(el => el.classList.remove('dragging'));
+  document.querySelectorAll('.file-row.drag-over').forEach(el => el.classList.remove('drag-over'));
+  document.querySelector('.file-area')?.classList.remove('drag-active');
+}
+
+function onFileDragOver(ev, fileId) {
+  if (_dragTagId === null) return;
+  ev.preventDefault();
+  ev.dataTransfer.dropEffect = 'copy';
+  const row = ev.currentTarget;
+  if (!row.classList.contains('drag-over')) {
+    document.querySelectorAll('.file-row.drag-over').forEach(el => el.classList.remove('drag-over'));
+    row.classList.add('drag-over');
+  }
+}
+
+function onFileDragLeave(ev) {
+  // 只有真正离开文件行才清除（不做严格的 relatedTarget 判断，简单处理）
+  if (ev.currentTarget === ev.target) {
+    ev.currentTarget.classList.remove('drag-over');
+  }
+}
+
+async function onFileDrop(ev, fileId) {
+  ev.preventDefault();
+  ev.stopPropagation();
+  const tagId = _dragTagId;
+  onTagDragEnd();
+  if (tagId === null) return;
+
+  // 判断目标文件是否在选中列表中，如果是则给所有选中文件打标签
+  const targetIds = state.selectedFileIds.includes(fileId) && state.selectedFileIds.length > 0
+    ? [...state.selectedFileIds]
+    : [fileId];
+
+  // 检查哪些文件已有此标签（避免重复添加）
+  const filesToTag = [];
+  for (const fid of targetIds) {
+    const f = (state.currentFiles || []).find(x => x.id === fid);
+    if (f && !(f.tags || []).some(t => t.id === tagId)) {
+      filesToTag.push(fid);
+    }
+  }
+
+  if (filesToTag.length === 0) {
+    showToast(targetIds.length > 1 ? '选中的文件均已拥有此标签' : '该文件已拥有此标签');
+    return;
+  }
+
+  try {
+    await api('/files/update-tags', {
+      method: 'POST',
+      body: JSON.stringify({ file_ids: filesToTag, add_tag_ids: [tagId], remove_tag_ids: [] }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const tagName = (state.tags || []).find(t => t.id === tagId)?.name || '';
+    const skipMsg = targetIds.length - filesToTag.length;
+    let msg = `已为 ${filesToTag.length} 个文件添加标签「${tagName}」`;
+    if (skipMsg > 0) msg += `（${skipMsg} 个已有，跳过）`;
+    showToast(msg);
+    loadFiles();
+    loadFilterData();
+  } catch (e) {
+    showToast('打标签失败：' + (e.message || '未知错误'));
+  }
+}
+
+// ==================== 行内备注提示框 ====================
+function showNoteTooltip(el, id) {
+  if (el.classList.contains('edit-mode')) return;
+  const tooltip = el.querySelector('.file-note-tooltip');
+  if (!tooltip) return;
+  tooltip.classList.add('visible');
+  tooltip.classList.remove('below');
+  // Measure after display so we can position and flip
+  requestAnimationFrame(() => {
+    const rect = el.getBoundingClientRect();
+    const ttHeight = tooltip.offsetHeight;
+    const gap = 8;
+    // Prefer above; flip to below if not enough room at viewport top
+    let top = rect.top - ttHeight - gap;
+    if (top < 4) {
+      top = rect.bottom + gap;
+      tooltip.classList.add('below');
+    }
+    tooltip.style.left = Math.max(4, rect.left) + 'px';
+    tooltip.style.top = top + 'px';
+  });
+}
+function hideNoteTooltip(el) {
+  const tooltip = el.querySelector('.file-note-tooltip');
+  if (tooltip) tooltip.classList.remove('visible');
+}
+
+// ==================== 行内备注编辑 ====================
+function startNoteEdit(ev, id, el) {
+  ev.stopPropagation();
+  if (el.classList.contains('edit-mode')) return;
+  const curText = el.querySelector('.note-preview')?.textContent === '...' 
+    ? (el.querySelector('.file-note-tooltip')?.textContent || '')
+    : (el.querySelector('.note-preview')?.textContent || '');
+  // If trigger icon (no note), convert to inline edit
+  if (el.classList.contains('file-note-trigger')) {
+    const row = el.closest('.file-row');
+    el.outerHTML = `<span class="file-note-inline edit-mode" onclick="event.stopPropagation()">
+      <textarea class="file-note-edit" placeholder="输入备注..."></textarea>
+    </span>`;
+    const newEl = row.querySelector('.file-note-inline');
+    const ta = newEl.querySelector('textarea');
+    ta.focus();
+    ta.addEventListener('blur', () => finishNoteEdit(id, newEl, ta));
+    ta.addEventListener('keydown', (e) => { if (e.key === 'Escape') { ta.value = ''; ta.blur(); } });
+    return;
+  }
+  // Existing inline note — switch to edit mode
+  const fullText = el.querySelector('.file-note-tooltip')?.textContent || curText;
+  el.classList.add('edit-mode');
+  el.innerHTML = `<textarea class="file-note-edit" placeholder="输入备注...">${escHtml(fullText)}</textarea>`;
+  const ta = el.querySelector('textarea');
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  ta.addEventListener('blur', () => finishNoteEdit(id, el, ta));
+  ta.addEventListener('keydown', (e) => { if (e.key === 'Escape') { ta.value = fullText; ta.blur(); } });
+}
+
+async function finishNoteEdit(id, el, ta) {
+  const newNote = ta.value.trim();
+  try { await updateFileNote(id, newNote); } catch (e) { /* save failed, still update display */ }
+  if (newNote) {
+    const preview = newNote.length > 20 ? newNote.substring(0, 20) + '...' : newNote;
+    el.classList.remove('edit-mode');
+    el.innerHTML = `<span class="note-icon">📝</span>
+      <span class="note-preview">${escHtml(preview)}</span>
+      <span class="file-note-tooltip">${escHtml(newNote)}</span>`;
+    el.onmouseenter = function() { showNoteTooltip(el, id); };
+    el.onmouseleave = function() { hideNoteTooltip(el); };
+    el.onclick = function(e) { e.stopPropagation(); startNoteEdit(e, id, el); };
+  } else {
+    // note was cleared — replace inline with trigger icon
+    el.outerHTML = `<span class="file-note-trigger" title="添加备注" onclick="event.stopPropagation();startNoteEdit(event, ${id}, this)">💬</span>`;
+  }
+}
+
+// ==================== 新增文件弹窗 ====================
+function showNewFilesModal(files) {
+  document.getElementById('newFilesTitle').textContent = `📥 新增文件（${files.length}）`;
+  const body = document.getElementById('newFilesBody');
+  const maxShow = 200;
+  const displayFiles = files.slice(0, maxShow);
+  const moreMsg = files.length > maxShow ? `<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">... 以及另外 ${files.length - maxShow} 个文件</div>` : '';
+  
+  body.innerHTML = displayFiles.map(f => {
+    const name = f.name || '';
+    const path = (f.path || '').replace(/\\/g, '\\\\');
+    const ext = name.includes('.') ? name.split('.').pop().toLowerCase() : '';
+    const extIcons = { pdf:'📄', doc:'📝', docx:'📝', xls:'📊', xlsx:'📊', ppt:'📽️', pptx:'📽️', txt:'📃', html:'🌐', htm:'🌐', csv:'📊', json:'📋', zip:'📦', rar:'📦', png:'🖼️', jpg:'🖼️' };
+    const icon = extIcons[ext] || '📄';
+    const displayName = name.length > 45 ? name.slice(0,42) + '...' : name;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
+      <span style="flex-shrink:0">${icon}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(displayName)}</span>
+      <span style="font-size:11px;color:var(--primary);background:var(--primary-light);padding:2px 6px;border-radius:4px;flex-shrink:0;">NEW</span>
+    </div>`;
+  }).join('') + moreMsg;
+  
+  document.getElementById('newFilesModal').classList.add('active');
+}
+function closeNewFilesModal() {
+  document.getElementById('newFilesModal').classList.remove('active');
+}
+
+// ==================== 打标签 ====================
+let tagModalFileIds = [];
+let tagModalOriginalTagIds = [];
+function openTagModal(fileIds, currentTags) {
+  tagModalFileIds = fileIds;
+  tagModalOriginalTagIds = (currentTags||[]).map(t=>t.id);
+  const isBatch = fileIds.length > 1;
+  const title = isBatch ? `批量打标签（${fileIds.length}个文件）` : '打标签';
+  document.getElementById('tagModalTitle').textContent=title;
+  const body=document.getElementById('tagModalBody');
+  const byDim={};
+  for(const t of state.tags) { if(!byDim[t.dimension_id]) byDim[t.dimension_id]={name:t.dimension_name,tags:[]}; byDim[t.dimension_id].tags.push(t); }
+  body.innerHTML=`
+    ${!isBatch ? '<div style="margin-bottom:12px;padding:8px 12px;background:#E3F2FD;border-radius:8px;font-size:12px;color:#1565C0;">💡 勾选=添加标签，取消勾选=移除标签</div>' : '<div style="margin-bottom:12px;padding:8px 12px;background:#E3F2FD;border-radius:8px;font-size:12px;color:#1565C0;">💡 批量模式：勾选=添加标签到所有选中文件</div>'}
+  ` + Object.entries(byDim).map(([dimId,v])=>`
+    <div class="tag-panel-dimension">
+      <div class="tag-panel-dimension-title">${escHtml(v.name)}</div>
+      <div class="tag-panel-tags">
+        ${v.tags.map(t=>`<span class="tag-panel-tag ${tagModalOriginalTagIds.includes(t.id)?'selected':''}" data-tag-id="${t.id}" onclick="toggleTagSelect(this)"><span class="tag-dot" style="background:${escHtml(t.color||'#999')}"></span>${escHtml(t.name)}</span>`).join('')}
+      </div>
+    </div>`).join('');
+  document.getElementById('tagModal').classList.add('active');
+}
+function toggleTagSelect(el) { el.classList.toggle('selected'); }
+async function applyTags() {
+  const selectedTags=[];
+  document.querySelectorAll('#tagModalBody .tag-panel-tag.selected').forEach(el=>selectedTags.push(Number(el.dataset.tagId)));
+  const addTags = selectedTags.filter(id => !tagModalOriginalTagIds.includes(id));
+  const removeTags = tagModalOriginalTagIds.filter(id => !selectedTags.includes(id));
+  if (addTags.length === 0 && removeTags.length === 0) { closeTagModal(); return; }
+  await api('/files/update-tags',{method:'POST',body:JSON.stringify({file_ids:tagModalFileIds,add_tag_ids:addTags,remove_tag_ids:removeTags}),headers:{'Content-Type':'application/json'}});
+  const msg=[];
+  if(addTags.length>0) msg.push(`添加 ${addTags.length} 个标签`);
+  if(removeTags.length>0) msg.push(`移除 ${removeTags.length} 个标签`);
+  showToast(`已${msg.join('，')}`);
+  closeTagModal(); loadFiles(); loadFilterData();
+}
+function closeTagModal() { document.getElementById('tagModal').classList.remove('active'); }
+
+// ==================== 筛选面板 ====================
+async function loadFilterData() {
+  const [dimensions, tags, groups] = await Promise.all([
+    api('/dimensions'), api('/tags'), api('/tag-groups')
+  ]);
+  state.dimensions = dimensions;
+  state.tags = tags;
+  state.groups = groups;
+  const countEl = document.getElementById('filterPanelCount');
+  if (countEl) countEl.textContent = `${tags.length} 个标签`;
+  renderFilterDimensions(dimensions, tags);
+  renderFilterGroups(groups);
+}
+
+function renderFilterDimensions(dimensions, tags) {
+  const byDim = {};
+  for (const t of tags) { if (!byDim[t.dimension_id]) byDim[t.dimension_id] = { name: t.dimension_name, tags: [] }; byDim[t.dimension_id].tags.push(t); }
+  document.getElementById('filterDimensions').innerHTML = dimensions.map(d => {
+    const dTags = byDim[d.id] ? byDim[d.id].tags : [];
+    return `<div class="filter-section">
+      <div class="filter-section-title" onclick="toggleSection(this)">
+        ${escHtml(d.name)}
+        <span class="dim-count">${dTags.length}</span>
+        <span class="tag-add-btn" title="添加标签" onclick="event.stopPropagation();quickAddTag(${d.id})">+</span>
+      </div>
+      <div class="filter-section-content" id="dimContent-${d.id}">
+        ${dTags.map(t => {
+          const cls = [];
+          if (state.activeTagIds.includes(t.id)) cls.push('active');
+          if (state.highlightedTagIds.includes(t.id)) cls.push('highlighted');
+          return `<span class="filter-tag ${cls.join(' ')}" data-tag-id="${t.id}" data-dim-id="${d.id}" draggable="true" ondragstart="onTagDragStart(event,${t.id})" ondragend="onTagDragEnd()" onclick="toggleFilterTag(${t.id},this)" oncontextmenu="showTagContextMenu(event,${t.id},${d.id},this)"><span class="tag-dot" style="background:${escHtml(t.color||'#999')}"></span>${escHtml(t.name)}</span>`;
+        }).join('')}
+        <div class="tag-quick-add" id="quickAdd-${d.id}" style="display:none;">
+          <input type="text" class="tag-quick-input" id="quickTagName-${d.id}" placeholder="新标签名称" onkeydown="onQuickTagKey(event,${d.id})">
+          <span class="tag-quick-btn" onclick="submitQuickTag(${d.id})" title="确认">✓</span>
+          <span class="tag-quick-btn cancel" onclick="cancelQuickTag(${d.id})" title="取消">×</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderFilterGroups(groups) {
+  const bar = document.getElementById('groupFilterBar');
+  if (!groups || groups.length === 0) {
+    bar.innerHTML = '<span class="group-label">📦 快捷分组：</span><span class="group-empty">暂无分组，请在设置中添加</span>';
+    return;
+  }
+  bar.innerHTML = '<span class="group-label">📦 快捷分组：</span>' + groups.map(g => {
+    let modeLabel = '';
+    if (g.expression) modeLabel = ' <span class="group-mode-tag">表达式</span>';
+    else if (g.logic === 'and') modeLabel = ' <span class="group-mode-tag">与</span>';
+    else modeLabel = ' <span class="group-mode-tag">或</span>';
+    const active = state.activeGroupId === g.id;
+    const highlighted = state.highlightedGroupIds.includes(g.id);
+    return `<span class="group-chip ${active?'active':''} ${highlighted?'highlighted':''}" onclick="selectGroup(${g.id},this)" oncontextmenu="showHighlightContextMenu(event,'group',${g.id},this)">${escHtml(g.name)}${modeLabel}</span>`;
+  }).join('');
+}
+
+function toggleFilterTag(tagId, el) {
+  const idx = state.activeTagIds.indexOf(tagId);
+  if (idx >= 0) state.activeTagIds.splice(idx, 1); else state.activeTagIds.push(tagId);
+  state.activeGroupId = null;
+  el.classList.toggle('active');
+  state.page = 1;
+  loadFiles();
+}
+
+function selectGroup(groupId, el) {
+  if (state.activeGroupId === groupId) { state.activeGroupId = null; el.classList.remove('active'); }
+  else { state.activeGroupId = groupId; document.querySelectorAll('.group-chip').forEach(e=>e.classList.remove('active')); el.classList.add('active'); }
+  state.activeTagIds = [];
+  document.querySelectorAll('.filter-tag.active').forEach(e=>e.classList.remove('active'));
+  state.page = 1;
+  loadFiles();
+}
+
+// 扩展名筛选
+function toggleExtFilter(el, exts) {
+  const isActive = el.classList.contains('active');
+  if (isActive) {
+    el.classList.remove('active');
+    state.activeExts = state.activeExts.filter(e => !exts.split(',').includes(e));
+  } else {
+    el.classList.add('active');
+    exts.split(',').forEach(e => { if (!state.activeExts.includes(e)) state.activeExts.push(e); });
+  }
+  state.page = 1;
+  loadFiles();
+}
+
+// 清除所有筛选条件
+function clearAllFilters() {
+  state.activeTagIds = [];
+  state.activeGroupId = null;
+  state.activeExts = [];
+  state.activePathPrefixes = [];
+  state.activeSource = '';
+  state.page = 1;
+  document.getElementById('searchInput').value = '';
+  document.querySelectorAll('.filter-tag.active').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.group-chip.active').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.ext-chip.active').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.path-chip.active').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.source-chip').forEach(e => e.classList.remove('active'));
+  document.querySelector('.source-chip[data-source=""]')?.classList.add('active');
+  loadFiles();
+  showToast('已清除所有筛选条件');
+}
+
+// ==================== 搜索 ====================
+document.getElementById('searchInput').addEventListener('input', function() {
+  clearTimeout(this._timer);
+  this._timer = setTimeout(() => { state.page=1; loadFiles(); }, 300);
+});
+
+// ==================== 设置面板 ====================
+let settingsGroups = [];
+let settingsFilters = {};
+
+async function openSettings() {
+  const modal = document.getElementById('settingsModal');
+  const body = document.getElementById('settingsModalBody');
+  modal.classList.add('active');
+  body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">正在加载...</div>';
+  try {
+    const [configs, dimensions, tags, groups, filters] = await Promise.all([
+      api('/scan-config'), api('/dimensions'), api('/tags'), api('/tag-groups'), api('/scan-filters')
+    ]);
+    settingsGroups = groups;
+    settingsFilters = filters;
+    body.innerHTML = buildSettingsHTML(configs, dimensions, tags, groups, filters);
+  } catch (e) {
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--danger);">加载失败：' + escHtml(e.message) + '<br><small>请检查后端服务是否启动</small></div>';
+  }
+}
+
+function buildSettingsHTML(configs, dimensions, tags, groups, filters) {
+  return `
+    <!-- 标签体系导入导出 -->
+    <div class="settings-section">
+      <h4>📤 标签体系导入 / 导出</h4>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:6px 0;">
+        <button type="button" class="btn btn-primary" style="padding:8px 16px;" onclick="exportTagSystem()">📤 导出标签体系 (TXT)</button>
+        <button type="button" class="btn btn-secondary" style="padding:8px 16px;" onclick="document.getElementById('importTagFile').click()">📥 导入标签体系 (TXT)</button>
+        <input type="file" id="importTagFile" accept=".csv,.txt,text/csv,text/plain" style="display:none;" onchange="importTagSystem(this)">
+        <span style="font-size:12px;color:var(--text-muted);">导出包含：维度、标签、分组配置。导入时已存在的自动跳过。</span>
+      </div>
+    </div>
+
+    <!-- 扫描路径配置 -->
+    <div class="settings-section">
+      <h4>📁 扫描路径配置（本地）</h4>
+      <table class="settings-table">
+        <thead><tr><th>路径</th><th style="width:60px;">启用</th><th style="width:60px;">操作</th></tr></thead>
+        <tbody>
+          ${configs.filter(c => c.type !== 'feishu').map(c => `
+            <tr>
+              <td style="font-family:monospace;font-size:12px;">${escHtml(c.path)}</td>
+              <td style="text-align:center;"><input type="checkbox" ${c.enabled?'checked':''} onchange="toggleScanConfig(${c.id},this.checked)"></td>
+              <td><button type="button" class="btn btn-danger" style="padding:4px 10px;font-size:12px;" onclick="deleteScanConfig(${c.id})">删除</button></td>
+            </tr>
+          `).join('')}
+          <tr>
+            <td><input type="text" id="newScanPath" placeholder="输入路径，如 D:\\技术资料" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:6px;"></td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary" style="padding:4px 10px;font-size:12px;" onclick="addScanPath()">添加</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 飞书云盘扫描配置 -->
+    <div class="settings-section">
+      <h4>🔷 飞书云盘扫描</h4>
+      <div style="margin-bottom:10px;display:flex;align-items:center;gap:10px;">
+        <button type="button" class="btn btn-secondary" style="padding:6px 14px;font-size:12px;" onclick="checkFeishuAuth()">检查授权状态</button>
+        <button type="button" class="btn btn-secondary" id="feishuAuthBtn" style="padding:6px 14px;font-size:12px;" onclick="feishuAuthLogin()">🔑 一键重新授权</button>
+        <span id="feishuAuthResult" style="font-size:12px;color:var(--text-muted);">未检查</span>
+      </div>
+      <table class="settings-table">
+        <thead><tr><th>类型</th><th>路径</th><th style="width:60px;">启用</th><th style="width:60px;">操作</th></tr></thead>
+        <tbody>
+          ${configs.filter(c => c.type === 'feishu').map(c => `
+            <tr>
+              <td style="font-size:12px;">🔷 飞书云盘</td>
+              <td style="font-size:12px;">${escHtml(c.path)}</td>
+              <td style="text-align:center;"><input type="checkbox" ${c.enabled?'checked':''} onchange="toggleScanConfig(${c.id},this.checked)"></td>
+              <td><button type="button" class="btn btn-danger" style="padding:4px 10px;font-size:12px;" onclick="deleteScanConfig(${c.id})">删除</button></td>
+            </tr>
+          `).join('')}
+          ${configs.filter(c => c.type === 'feishu').length === 0 ? `
+            <tr><td colspan="4" style="text-align:center;padding:10px;">
+              <button type="button" class="btn btn-primary" style="padding:6px 16px;font-size:12px;" onclick="addFeishuScanConfig()">添加飞书云盘扫描</button>
+              <span style="font-size:11px;color:var(--text-muted);margin-left:8px;">将扫描整个飞书云盘根目录（递归）</span>
+            </td></tr>
+          ` : ''}
+        </tbody>
+      </table>
+      <div style="margin-top:8px;font-size:11px;color:var(--text-muted);">
+        前提：需安装 lark-cli 并完成授权（<code>lark-cli auth login --domain drive --as user</code>，或点击上方「🔑 一键重新授权」自动完成）。认证过期时先重试扫描（可能是网络抖动误报），若仍失败再重新授权。飞书扫描仅导入元数据（名称、URL、类型、修改时间），不下载文件内容。
+      </div>
+    </div>
+
+    <!-- 扫描文件类型过滤 -->
+    <div class="settings-section">
+      <h4>🔍 扫描文件类型过滤</h4>
+      <div style="margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer;">
+          <input type="checkbox" id="filterEnabled" ${(filters&&filters.enabled)?'checked':''} onchange="toggleFilterEnabled(this.checked)"> 启用过滤
+        </label>
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer;">
+          <input type="checkbox" id="filterFolders" ${(filters&&filters.include_folders)?'checked':''} onchange="toggleFilterFolders(this.checked)"> 📁 包含文件夹
+        </label>
+        <span style="font-size:12px;color:var(--text-muted);">仅扫描下方配置的扩展名。关闭则扫描所有文件。目录始终被遍历。</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:auto;">配置: data\\scan_filters.json</span>
+        <button type="button" class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="exportScanFilters()">导出</button>
+        <button type="button" class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="document.getElementById('importFilterFile').click()">导入</button>
+        <input type="file" id="importFilterFile" accept=".json" style="display:none;" onchange="importScanFilters(this)">
+      </div>
+      <div id="filterExtChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+        ${(filters&&filters.extensions||[]).map(ext => `
+          <span class="filter-ext-chip" title="点击移除">
+            .${ext}<button type="button" style="margin-left:4px;background:none;border:none;cursor:pointer;font-size:11px;color:var(--danger);padding:0;line-height:1;" onclick="removeFilterExt('${ext}')">×</button>
+          </span>
+        `).join('')}
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <select id="presetExtSelect" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+          <option value="">-- 添加常见类型 --</option>
+          <optgroup label="文档">
+            <option value="pptx">PPT (.pptx)</option>
+            <option value="docx">Word (.docx)</option>
+            <option value="xlsx">Excel (.xlsx)</option>
+            <option value="xls">Excel 旧版 (.xls)</option>
+            <option value="csv">CSV (.csv)</option>
+            <option value="pdf">PDF (.pdf)</option>
+            <option value="txt">文本 (.txt)</option>
+          </optgroup>
+          <optgroup label="图表">
+            <option value="xmind">XMind (.xmind)</option>
+            <option value="vsd">Visio (.vsd)</option>
+            <option value="vsdx">Visio (.vsdx)</option>
+          </optgroup>
+          <optgroup label="压缩包">
+            <option value="zip">ZIP (.zip)</option>
+            <option value="rar">RAR (.rar)</option>
+            <option value="7z">7-Zip (.7z)</option>
+            <option value="tar">TAR (.tar)</option>
+            <option value="gz">GZip (.gz)</option>
+          </optgroup>
+        </select>
+        <button type="button" class="btn btn-primary" style="padding:5px 14px;font-size:12px;" onclick="addFilterExt()">添加</button>
+        <input type="text" id="customExtInput" placeholder="或手动输入扩展名（不含.）" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;width:180px;font-size:12px;">
+        <button type="button" class="btn btn-secondary" style="padding:5px 14px;font-size:12px;" onclick="addCustomFilterExt()">手动添加</button>
+      </div>
+    </div>
+
+    <!-- 数据备份与恢复 -->
+    <div class="settings-section">
+      <h4>💾 数据备份与恢复</h4>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:6px 0;">
+        <button type="button" class="btn btn-primary" style="padding:8px 16px;" onclick="backupDatabase()">📥 下载完整备份</button>
+        <button type="button" class="btn btn-secondary" style="padding:8px 16px;" onclick="document.getElementById('restoreFileInput').click()">📤 恢复备份</button>
+        <input type="file" id="restoreFileInput" accept=".json" style="display:none;" onchange="restoreDatabase(this)">
+        <span style="font-size:12px;color:var(--text-muted);">备份包含：扫描文件列表、标签配置、扫描路径。恢复前会自动备份当前数据。</span>
+      </div>
+      <div id="backupList" style="margin-top:10px;font-size:12px;color:var(--text-muted);">
+        <button type="button" class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="loadBackupList()">🔄 查看自动备份</button>
+      </div>
+    </div>
+
+    <!-- 标签维度管理 -->
+    <div class="settings-section">
+      <h4>🏷️ 标签维度管理</h4>
+      <table class="settings-table">
+        <thead><tr><th>维度名称</th><th style="width:80px;">排序</th><th style="width:60px;">操作</th></tr></thead>
+        <tbody>
+          ${dimensions.map(d => `
+            <tr>
+              <td><input type="text" value="${escHtml(d.name)}" onchange="updateDimension(${d.id},this.value,${d.sort_order})"></td>
+              <td><input type="number" value="${d.sort_order}" style="width:60px;" onchange="updateDimension(${d.id},'${escHtml(d.name)}',this.value)"></td>
+              <td><button type="button" class="btn btn-danger" style="padding:4px 10px;font-size:12px;" onclick="deleteDimension(${d.id})">删除</button></td>
+            </tr>
+          `).join('')}
+          <tr>
+            <td><input type="text" id="newDimName" placeholder="新维度名称" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:6px;"></td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary" style="padding:4px 10px;font-size:12px;" onclick="addDimension()">添加</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 标签管理 -->
+    <div class="settings-section">
+      <h4>🎨 标签管理</h4>
+      <table class="settings-table">
+        <thead><tr><th>标签名称</th><th>所属维度</th><th style="width:50px;">颜色</th><th style="width:60px;">操作</th></tr></thead>
+        <tbody>
+          ${tags.map(t => `
+            <tr>
+              <td><input type="text" value="${escHtml(t.name)}" onchange="updateTag(${t.id},this.value,${t.dimension_id},'${t.color}')"></td>
+              <td>
+                <select onchange="updateTag(${t.id},'${escHtml(t.name)}',this.value,'${t.color}')">
+                  ${dimensions.map(d=>`<option value="${d.id}" ${d.id===t.dimension_id?'selected':''}>${escHtml(d.name)}</option>`).join('')}
+                </select>
+              </td>
+              <td><input type="color" class="settings-color" value="${t.color}" onchange="updateTag(${t.id},'${escHtml(t.name)}',${t.dimension_id},this.value)"></td>
+              <td><button type="button" class="btn btn-danger" style="padding:4px 10px;font-size:12px;" onclick="deleteTag(${t.id})">删除</button></td>
+            </tr>
+          `).join('')}
+          <tr>
+            <td><input type="text" id="newTagName" placeholder="新标签名称" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:6px;"></td>
+            <td>
+              <select id="newTagDim">
+                ${dimensions.map(d=>`<option value="${d.id}">${escHtml(d.name)}</option>`).join('')}
+              </select>
+            </td>
+            <td><input type="color" id="newTagColor" class="settings-color" value="#4A90D9"></td>
+            <td><button type="button" class="btn btn-primary" style="padding:4px 10px;font-size:12px;" onclick="addTag()">添加</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 标签分组管理 -->
+    <div class="settings-section">
+      <h4>📌 标签分组（快捷组合）管理</h4>
+      <div id="groupsEditor">
+        ${groups.map(g => renderGroupEditor(g, tags, dimensions)).join('')}
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px;align-items:center;">
+        <input type="text" id="newGroupName" placeholder="新分组名称" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;width:200px;">
+        <select id="newGroupMode" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+          <option value="simple">简单模式</option>
+          <option value="expression">高级模式（表达式）</option>
+        </select>
+        <button type="button" class="btn btn-primary" style="padding:5px 14px;font-size:12px;" onclick="addGroup()">新建分组</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderGroupEditor(g, tags, dimensions) {
+  const isExpression = !!g.expression;
+  const mode = isExpression ? 'expression' : 'simple';
+  const logic = g.logic || 'or';
+  return `<div class="group-card" data-group-id="${g.id}">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <input type="text" value="${escHtml(g.name)}" style="font-weight:600;font-size:14px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;flex:1;outline:none;" onchange="renameGroup(${g.id},this.value)">
+      <button type="button" class="btn btn-danger" style="padding:4px 10px;font-size:12px;" onclick="deleteGroup(${g.id})">删除</button>
+    </div>
+    <!-- 模式切换 -->
+    <div class="group-mode-toggle" style="margin-bottom:10px;">
+      <button type="button" class="${mode==='simple'?'active':''}" onclick="switchGroupMode(${g.id},'simple',this)">简单模式</button>
+      <button type="button" class="${mode==='expression'?'active':''}" onclick="switchGroupMode(${g.id},'expression',this)">高级模式</button>
+    </div>
+    <!-- 简单模式 -->
+    <div class="group-simple" style="display:${mode==='simple'?'block':'none'};">
+      <div class="group-logic-toggle" style="margin-bottom:8px;">
+        <button type="button" class="${logic==='or'?'active':''}" onclick="setGroupLogic(${g.id},'or',this)">OR（或）</button>
+        <button type="button" class="${logic==='and'?'active':''}" onclick="setGroupLogic(${g.id},'and',this)">AND（与）</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">
+        ${tags.map(t => {
+          // 从 groups 数据中找到该分组的标签
+          const grp = settingsGroups.find(gg => gg.id == g.id);
+          const inGroup = grp && grp.tags && grp.tags.some(gt => gt.id === t.id);
+          return `<span class="tag-panel-tag ${inGroup?'selected':''}" data-group-id="${g.id}" data-tag-id="${t.id}" onclick="toggleGroupTag(this,${g.id},${t.id})">${escHtml(t.name)}</span>`;
+        }).join('')}
+      </div>
+    </div>
+    <!-- 高级模式 -->
+    <div class="group-expression" style="display:${mode==='expression'?'block':'none'};">
+      <textarea class="expression-textarea" id="expr-${g.id}" placeholder="输入表达式，如：待阅读 AND PSU&#10;(待阅读 OR 进行中) AND NOT 归档" oninput="onExpressionInput(${g.id})">${escHtml(g.expression||'')}</textarea>
+      <div class="expression-help">
+        语法：<code>标签名</code> <code>AND</code> / <code>OR</code> / <code>NOT</code> <code>标签名</code>，支持括号改变优先级<br>
+        例：<code>(待阅读 OR 进行中) AND PSU</code> 、 <code>NOT 归档</code>
+      </div>
+      <div class="expression-result" id="expr-result-${g.id}"></div>
+      <button type="button" class="btn btn-secondary" style="margin-top:8px;padding:5px 14px;font-size:12px;" onclick="validateAndSaveExpression(${g.id})">✅ 验证并保存表达式</button>
+    </div>
+  </div>`;
+}
+
+// 切换分组模式（简单/高级）—— 就地更新 DOM，不重新加载
+async function switchGroupMode(groupId, mode, btn) {
+  const group = settingsGroups.find(g => g.id == groupId);
+  if (!group) return;
+  if (mode === 'simple') {
+    group.expression = '';
+    await api(`/tag-groups/${groupId}`, { method: 'PUT', body: JSON.stringify({ expression: '', logic: group.logic||'or' }), headers: { 'Content-Type': 'application/json' } });
+  } else {
+    group.logic = 'or';
+    group.expression = '';
+    await api(`/tag-groups/${groupId}`, { method: 'PUT', body: JSON.stringify({ expression: '', logic: 'or' }), headers: { 'Content-Type': 'application/json' } });
+  }
+  // 就地更新 DOM
+  const card = document.querySelector(`.group-card[data-group-id="${groupId}"]`);
+  if (card) {
+    card.querySelector('.group-simple').style.display = mode==='simple' ? 'block' : 'none';
+    card.querySelector('.group-expression').style.display = mode==='expression' ? 'block' : 'none';
+    card.querySelectorAll('.group-mode-toggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+}
+
+// 设置分组逻辑（AND/OR）
+async function setGroupLogic(groupId, logic, btn) {
+  const group = settingsGroups.find(g => g.id == groupId);
+  if (group) group.logic = logic;
+  await api(`/tag-groups/${groupId}`, { method: 'PUT', body: JSON.stringify({ logic }), headers: { 'Content-Type': 'application/json' } });
+  const toggle = btn.parentElement;
+  toggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// 表达式输入时实时验证（防抖）
+let exprValidateTimers = {};
+function onExpressionInput(groupId) {
+  clearTimeout(exprValidateTimers[groupId]);
+  exprValidateTimers[groupId] = setTimeout(() => validateExpression(groupId), 500);
+}
+
+// 验证表达式
+async function validateExpression(groupId) {
+  const expr = document.getElementById(`expr-${groupId}`).value.trim();
+  const resultEl = document.getElementById(`expr-result-${groupId}`);
+  if (!expr) { resultEl.className='expression-result'; resultEl.textContent=''; return; }
+  const r = await api('/tag-groups/validate', { method: 'POST', body: JSON.stringify({ expression: expr }), headers: { 'Content-Type': 'application/json' } });
+  if (r.ok) { resultEl.className='expression-result ok'; resultEl.textContent='✅ 表达式合法'; }
+  else { resultEl.className='expression-result err'; resultEl.textContent='❌ '+(r.error||'表达式错误'); }
+}
+
+// 验证并保存表达式
+async function validateAndSaveExpression(groupId) {
+  const expr = document.getElementById(`expr-${groupId}`).value.trim();
+  const resultEl = document.getElementById(`expr-result-${groupId}`);
+  const r = await api('/tag-groups/validate', { method: 'POST', body: JSON.stringify({ expression: expr }), headers: { 'Content-Type': 'application/json' } });
+  if (!r.ok) { resultEl.className='expression-result err'; resultEl.textContent='❌ '+(r.error||'表达式错误'); return; }
+  await api(`/tag-groups/${groupId}`, { method: 'PUT', body: JSON.stringify({ expression: expr }), headers: { 'Content-Type': 'application/json' } });
+  const group = settingsGroups.find(g => g.id == groupId);
+  if (group) group.expression = expr;
+  resultEl.className='expression-result ok';
+  resultEl.textContent='✅ 表达式已保存';
+  showToast('表达式已保存');
+  loadFilterData();
+}
+
+// 切换分组中的标签（简单模式）—— 就地更新，不重新加载
+async function toggleGroupTag(el, groupId, tagId) {
+  el.classList.toggle('selected');
+  // 重新获取该分组的当前标签
+  const r = await api(`/tag-groups`);
+  const group = r.find(g => g.id == groupId);
+  const currentTagIds = group ? group.tags.map(t => t.id) : [];
+  const idx = currentTagIds.indexOf(tagId);
+  if (idx >= 0) { currentTagIds.splice(idx, 1); } else { currentTagIds.push(tagId); }
+  await api(`/tag-groups/${groupId}/tags`, { method: 'PUT', body: JSON.stringify({ tag_ids: currentTagIds }), headers: { 'Content-Type': 'application/json' } });
+  // 更新 settingsGroups 缓存
+  const sg = settingsGroups.find(g => g.id == groupId);
+  if (sg) {
+    sg.tags = currentTagIds.map(id => state.tags.find(t => t.id === id)).filter(Boolean);
+  }
+}
+
+async function addGroup() {
+  const name = document.getElementById('newGroupName').value.trim();
+  if (!name) return;
+  const mode = document.getElementById('newGroupMode').value;
+  const body = { name };
+  if (mode === 'expression') { body.expression = ''; body.logic = 'or'; }
+  else { body.expression = ''; body.logic = 'or'; }
+  const r = await api('/tag-groups', { method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
+  document.getElementById('newGroupName').value = '';
+  // 只添加新的分组卡片，不重新加载整个面板
+  const groupsResp = await api('/tag-groups');
+  settingsGroups = groupsResp;
+  const newGroup = groupsResp.find(g => g.id === r.id);
+  if (newGroup) {
+    const editor = document.getElementById('groupsEditor');
+    editor.insertAdjacentHTML('beforeend', renderGroupEditor(newGroup, state.tags, state.dimensions));
+  }
+  showToast('分组已创建');
+}
+
+async function renameGroup(id, name) {
+  await api(`/tag-groups/${id}`, { method: 'PUT', body: JSON.stringify({ name }), headers: { 'Content-Type': 'application/json' } });
+}
+
+async function deleteGroup(id) {
+  await api(`/tag-groups/${id}`, { method: 'DELETE' });
+  // 就地移除 DOM
+  const card = document.querySelector(`.group-card[data-group-id="${id}"]`);
+  if (card) card.remove();
+  settingsGroups = settingsGroups.filter(g => g.id != id);
+  showToast('分组已删除');
+  loadFilterData();
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('active');
+  loadFilterData();
+}
+
+async function showChangelog() {
+  const modal = document.getElementById('changelogModal');
+  const body = document.getElementById('changelogModalBody');
+  modal.style.display = 'flex';
+  try {
+    const data = await api('/changelog');
+    const cl = data.changelog || [];
+    body.innerHTML = cl.map(v => `
+      <div class="changelog-ver">${v.version}</div>
+      <div class="changelog-date">${v.date}</div>
+      <ul class="changelog-list">
+        ${v.changes.map(c => `<li>${c}</li>`).join('')}
+      </ul>
+    `).join('');
+  } catch(e) {
+    body.innerHTML = '<p style="color:var(--danger);">加载更新记录失败</p>';
+  }
+  // Close on overlay click
+  modal.onclick = function(e) {
+    if (e.target === modal) modal.style.display = 'none';
+  };
+}
+
+// ==================== 扫描路径配置 ====================
+async function toggleScanConfig(id, enabled) {
+  await api(`/scan-config/${id}`, { method: 'PUT', body: JSON.stringify({ enabled }), headers: { 'Content-Type': 'application/json' } });
+}
+async function deleteScanConfig(id) {
+  await api(`/scan-config/${id}`, { method: 'DELETE' });
+  // 就地移除
+  const row = event.target.closest('tr');
+  if (row) row.remove();
+}
+async function addScanPath() {
+  const path = document.getElementById('newScanPath').value.trim();
+  if (!path) return;
+  await api('/scan-config', { method: 'POST', body: JSON.stringify({ path }), headers: { 'Content-Type': 'application/json' } });
+  document.getElementById('newScanPath').value = '';
+  // 重新加载设置面板（路径配置需要刷新）
+  openSettings();
+}
+
+async function checkFeishuAuth() {
+  const el = document.getElementById('feishuAuthResult');
+  const btn = document.getElementById('feishuAuthBtn');
+  el.textContent = '检查中...';
+  el.style.color = 'var(--text-muted)';
+  if (btn) {
+    // 按钮始终可见：未授权时主按钮样式（醒目引导），已授权/检查中时次要样式
+    btn.className = 'btn btn-secondary';
+    btn.title = '已授权时点击可重新授权（更换账号）';
+  }
+  try {
+    const r = await api('/feishu/auth-status');
+    if (r.authenticated) {
+      el.innerHTML = '✅ 已授权: ' + escHtml(r.user_name || '未知用户');
+      el.style.color = 'var(--success)';
+      if (btn) btn.title = '已授权，点击可重新授权（更换账号）';
+    } else {
+      const isNet = (r.error || '').indexOf('网络') !== -1;
+      if (isNet) {
+        // 网络异常 ≠ 认证问题，不引导重新授权
+        el.innerHTML = '⚠️ 网络异常（非认证问题）: ' + escHtml(r.error || '') + '。请检查网络后重试';
+        el.style.color = 'var(--danger)';
+      } else {
+        el.innerHTML = '❌ 未授权: ' + escHtml(r.error || '请先授权') + '。可点击「一键重新授权」或命令行执行 lark-cli auth login --domain drive --as user';
+        el.style.color = 'var(--danger)';
+        if (btn) {
+          btn.className = 'btn btn-primary';   // 未授权时高亮引导
+          btn.title = '认证未授权，点击开始一键重新授权';
+        }
+      }
+    }
+  } catch(e) {
+    el.textContent = '检查失败: ' + e.message;
+    el.style.color = 'var(--danger)';
+  }
+}
+
+// 一键重新授权：发起设备码授权，弹出引导窗口
+async function feishuAuthLogin() {
+  const btn = document.getElementById('feishuAuthBtn');
+  const el = document.getElementById('feishuAuthResult');
+  // 已授权时点击 = 更换账号，先确认避免误覆盖
+  if (el && el.textContent.indexOf('已授权') !== -1) {
+    if (!confirm('当前已授权，重新授权将更换账号。确定继续吗？')) return;
+  }
+  if (btn) btn.disabled = true;
+  if (el) { el.textContent = '正在发起授权...'; el.style.color = 'var(--text-muted)'; }
+  try {
+    const r = await api('/feishu/auth-login', { method: 'POST', body: '{}', headers: { 'Content-Type': 'application/json' } });
+    if (!r.ok) {
+      if (el) { el.innerHTML = '❌ 发起授权失败: ' + escHtml(r.error || ''); el.style.color = 'var(--danger)'; }
+      if (btn) btn.disabled = false;
+      return;
+    }
+    // 打开授权引导弹窗
+    showFeishuAuthGuide(r.verification_url);
+  } catch(e) {
+    if (el) { el.textContent = '发起授权失败: ' + e.message; el.style.color = 'var(--danger)'; }
+    if (btn) btn.disabled = false;
+  }
+}
+
+// 授权引导弹窗：展示授权链接 + 「我已完成授权」
+function showFeishuAuthGuide(verificationUrl) {
+  let ov = document.getElementById('feishu-auth-guide');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'feishu-auth-guide';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:24px 28px;max-width:520px;width:90%;box-shadow:0 8px 30px rgba(0,0,0,.2);">
+      <h3 style="margin:0 0 12px;font-size:16px;">🔑 飞书一键授权</h3>
+      <div style="font-size:13px;color:#333;line-height:1.8;">
+        <p><b>步骤 1</b>：点击下方链接，在浏览器中完成飞书授权（链接 10 分钟内有效）。</p>
+        <p style="word-break:break-all;background:#f5f5f5;border-radius:6px;padding:8px 10px;font-size:12px;">
+          <a href="${escHtml(verificationUrl)}" target="_blank" rel="noopener">${escHtml(verificationUrl)}</a>
+        </p>
+        <p><b>步骤 2</b>：授权完成后，回到本页点击下方「我已完成授权」。</p>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+        <button class="btn btn-secondary" style="padding:6px 14px;font-size:12px;" onclick="document.getElementById('feishu-auth-guide').style.display='none'">取消</button>
+        <button class="btn btn-primary" style="padding:6px 14px;font-size:12px;" onclick="feishuAuthComplete()">✅ 我已完成授权</button>
+      </div>
+      <div id="feishuAuthCompleteResult" style="font-size:12px;color:#666;margin-top:10px;"></div>
+    </div>`;
+  ov.style.display = 'flex';
+}
+
+// 完成授权：用暂存的 device_code 确认，成功后刷新状态
+async function feishuAuthComplete() {
+  const resEl = document.getElementById('feishuAuthCompleteResult');
+  if (resEl) { resEl.textContent = '正在确认授权...'; resEl.style.color = 'var(--text-muted)'; }
+  try {
+    const r = await api('/feishu/auth-complete', { method: 'POST', body: '{}', headers: { 'Content-Type': 'application/json' } });
+    if (r.ok) {
+      const ov = document.getElementById('feishu-auth-guide');
+      if (ov) ov.style.display = 'none';
+      checkFeishuAuth();
+      showToast('✅ 飞书授权成功', 'success');
+    } else {
+      if (resEl) { resEl.innerHTML = '❌ ' + escHtml(r.error || '授权确认失败'); resEl.style.color = 'var(--danger)'; }
+    }
+  } catch(e) {
+    if (resEl) { resEl.textContent = '确认失败: ' + e.message; resEl.style.color = 'var(--danger)'; }
+  }
+}
+
+async function addFeishuScanConfig() {
+  await api('/scan-config', { method: 'POST', body: JSON.stringify({ type: 'feishu' }), headers: { 'Content-Type': 'application/json' } });
+  openSettings();
+}
+
+// ==================== 扫描文件类型过滤 ====================
+async function toggleFilterEnabled(enabled) {
+  settingsFilters.enabled = enabled;
+  await saveFilterConfig();
+}
+async function toggleFilterFolders(checked) {
+  settingsFilters.include_folders = checked;
+  await saveFilterConfig();
+}
+async function addFilterExt() {
+  const sel = document.getElementById('presetExtSelect');
+  const ext = sel.value;
+  if (!ext) return;
+  if (!settingsFilters.extensions.includes(ext)) {
+    settingsFilters.extensions.push(ext);
+    await saveFilterConfig();
+  }
+  sel.value = '';
+  renderFilterChips();
+}
+async function addCustomFilterExt() {
+  const input = document.getElementById('customExtInput');
+  let ext = input.value.trim().toLowerCase().replace(/^\./, '');
+  if (!ext) return;
+  if (!settingsFilters.extensions.includes(ext)) {
+    settingsFilters.extensions.push(ext);
+    await saveFilterConfig();
+  }
+  input.value = '';
+  renderFilterChips();
+}
+async function removeFilterExt(ext) {
+  settingsFilters.extensions = settingsFilters.extensions.filter(e => e !== ext);
+  await saveFilterConfig();
+  renderFilterChips();
+}
+async function saveFilterConfig() {
+  await api('/scan-filters', {
+    method: 'PUT',
+    body: JSON.stringify({ enabled: settingsFilters.enabled, extensions: settingsFilters.extensions, include_folders: settingsFilters.include_folders }),
+    headers: { 'Content-Type': 'application/json' }
+  });
+  showToast('过滤配置已保存，下次扫描生效');
+}
+function renderFilterChips() {
+  const container = document.getElementById('filterExtChips');
+  if (!container) return;
+  container.innerHTML = (settingsFilters.extensions || []).map(ext => `
+    <span class="filter-ext-chip" title="点击移除" data-ext="${ext}">
+      .${ext}<button type="button" style="margin-left:4px;background:none;border:none;cursor:pointer;font-size:11px;color:var(--danger);padding:0;line-height:1;" onclick="removeFilterExt('${ext}')">×</button>
+    </span>
+  `).join('');
+}
+async function exportScanFilters() {
+  const filters = await api('/scan-filters');
+  const blob = new Blob([JSON.stringify(filters, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'scan_filters_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('过滤配置已导出');
+}
+async function importScanFilters(input) {
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const config = JSON.parse(text);
+    if (config.enabled === undefined && config.extensions === undefined) {
+      showToast('文件格式不正确，需要包含 enabled 和 extensions 字段');
+      return;
+    }
+    settingsFilters = config;
+    await api('/scan-filters', {
+      method: 'PUT',
+      body: JSON.stringify({ enabled: settingsFilters.enabled, extensions: settingsFilters.extensions, include_folders: settingsFilters.include_folders }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    showToast('过滤配置已导入');
+    openSettings();
+  } catch (e) {
+    showToast('导入失败：' + e.message);
+  }
+  input.value = '';
+}
+
+// ==================== 维度管理 ====================
+async function addDimension() {
+  const name = document.getElementById('newDimName').value.trim();
+  if (!name) return;
+  await api('/dimensions', { method: 'POST', body: JSON.stringify({ name }), headers: { 'Content-Type': 'application/json' } });
+  document.getElementById('newDimName').value = '';
+  openSettings();
+}
+async function updateDimension(id, name, sort_order) {
+  await api(`/dimensions/${id}`, { method: 'PUT', body: JSON.stringify({ name, sort_order }), headers: { 'Content-Type': 'application/json' } });
+}
+async function deleteDimension(id) {
+  if (!confirm('确定删除该维度？其下所有标签也会被删除！')) return;
+  await api(`/dimensions/${id}`, { method: 'DELETE' });
+  openSettings();
+}
+
+// ==================== 标签管理 ====================
+async function addTag() {
+  const name = document.getElementById('newTagName').value.trim();
+  const dimension_id = document.getElementById('newTagDim').value;
+  const color = document.getElementById('newTagColor').value;
+  if (!name) return;
+  await api('/tags', { method: 'POST', body: JSON.stringify({ dimension_id:Number(dimension_id), name, color }), headers: { 'Content-Type': 'application/json' } });
+  document.getElementById('newTagName').value = '';
+  openSettings();
+}
+async function updateTag(id, name, dimension_id, color) {
+  await api(`/tags/${id}`, { method: 'PUT', body: JSON.stringify({ name, dimension_id:Number(dimension_id), color }), headers: { 'Content-Type': 'application/json' } });
+}
+async function deleteTag(id) {
+  await api(`/tags/${id}`, { method: 'DELETE' });
+  openSettings();
+}
+
+// ==================== CSV 导出 ====================
+async function exportCSV() {
+  const params = new URLSearchParams();
+  const keyword = document.getElementById('searchInput').value;
+  if (keyword) params.set('keyword', keyword);
+  if (state.activeTagIds.length > 0) params.set('tag_ids', state.activeTagIds.join(','));
+  if (state.activeGroupId) params.set('group_id', state.activeGroupId);
+  if (state.activeExts.length > 0) params.set('ext', state.activeExts.join(','));
+  if (state.activePathPrefixes.length > 0) params.set('path_prefix', state.activePathPrefixes.join(','));
+  params.set('page', 1);
+  params.set('page_size', 99999); // 导出全部
+  const r = await api('/files?' + params.toString());
+  const files = r.data;
+  if (files.length === 0) { showToast('没有可导出的文件'); return; }
+
+  // 构建 CSV
+  const BOM = '\uFEFF';
+  let csv = BOM + '文件名,路径,来源,大小,修改时间,标签\n';
+  for (const f of files) {
+    const tagStr = (f.tags||[]).map(t => `${t.dimension_name}:${t.name}`).join(';');
+    const source = f.source || 'local';
+    const sizeStr = source === 'feishu' ? '--' : (f.file_size > 1048576 ? (f.file_size/1048576).toFixed(1)+'MB' : f.file_size > 1024 ? (f.file_size/1024).toFixed(1)+'KB' : f.file_size+'B');
+    const mtime = f.modified_time ? new Date(f.modified_time).toLocaleString('zh-CN') : '';
+    csv += `"${f.file_name}","${f.file_path}",${source},${sizeStr},"${mtime}","${tagStr}"\n`;
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `文件标签导出_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`已导出 ${files.length} 个文件`);
+}
+
+// ==================== 标签体系导入导出 ====================
+async function exportTagSystem() {
+  try {
+    const res = await fetch(API + '/tags/export');
+    if (!res.ok) throw new Error('导出失败');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `标签体系导出_${new Date().toISOString().slice(0,10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('标签体系已导出');
+  } catch (e) {
+    showToast('导出失败：' + e.message);
+  }
+}
+
+async function importTagSystem(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const text = await file.text();
+  try {
+    const r = await api('/tags/import', {
+      method: 'POST',
+      body: JSON.stringify({ csv: text }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    showToast(r.summary || '导入完成');
+    openSettings();       // 刷新设置面板
+    loadFilterData();     // 刷新左侧筛选面板
+  } catch (e) {
+    showToast('导入失败：' + e.message);
+  }
+  input.value = ''; // reset for re-import
+}
+
+// ==================== Database Backup & Restore ====================
+async function backupDatabase() {
+  try {
+    const res = await fetch(API + '/backup');
+    if (!res.ok) throw new Error('Export failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const now = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    a.download = `file-tag-backup-${now}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Backup downloaded');
+  } catch (e) {
+    showToast('Backup failed: ' + e.message);
+  }
+}
+
+async function restoreDatabase(input) {
+  if (!confirm('This will replace ALL current data. Current data will be backed up first.\n\nAre you sure?')) {
+    input.value = '';
+    return;
+  }
+  try {
+    const file = input.files[0];
+    if (!file) return;
+    const text = await file.text();
+    const data = JSON.parse(text);
+    const res = await fetch(API + '/backup/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: data })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Restore failed');
+    }
+    const result = await res.json();
+    showToast(`Restored: ${result.files} files, ${result.scan_configs} scan paths. Restart server to reload.`);
+  } catch (e) {
+    showToast('Restore failed: ' + e.message);
+  }
+  input.value = '';
+}
+
+async function loadBackupList() {
+  const el = document.getElementById('backupList');
+  try {
+    const res = await fetch(API + '/backup/list');
+    const backups = await res.json();
+    if (!backups.length) {
+      el.innerHTML = '<div style="margin-top:6px;">No backups found in data/backup/</div>';
+      return;
+    }
+    const sizeFmt = (b) => b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(1) + ' MB';
+    const dateFmt = (s) => new Date(s).toLocaleString('zh-CN');
+    el.innerHTML = `
+      <div style="margin-top:8px;font-weight:600;font-size:13px;">Auto-backups (data/backup/):</div>
+      <div style="max-height:200px;overflow-y:auto;margin-top:4px;">
+      ${backups.slice(0, 15).map(b => `
+        <div style="display:flex;align-items:center;gap:8px;padding:3px 0;border-bottom:1px solid var(--border);">
+          <span style="flex:1;font-family:monospace;font-size:11px;">${dateFmt(b.mtime)}</span>
+          <span style="color:var(--text-muted);font-size:11px;">${sizeFmt(b.size)}</span>
+          <button class="btn btn-secondary" style="padding:2px 8px;font-size:10px;" onclick="downloadBackup('${b.name}')">Download</button>
+        </div>
+      `).join('')}
+      </div>
+    `;
+  } catch (e) {
+    el.innerHTML = '<div style="margin-top:6px;color:var(--danger);">Failed to load backup list</div>';
+  }
+}
+
+function downloadBackup(name) {
+  const a = document.createElement('a');
+  a.href = API + '/backup/' + encodeURIComponent(name);
+  a.download = name;
+  a.click();
+}
+
+// ==================== 分页 ====================
+function renderPagination(currentPage, totalPages) {
+  const container = document.getElementById('pagination');
+  if (totalPages <= 1) { container.innerHTML=''; return; }
+  let html = `<button type="button" ${currentPage<=1?'disabled':''} onclick="goPage(${currentPage-1})">上一页</button>`;
+  html += `<span class="page-info">${currentPage} / ${totalPages}</span>`;
+  html += `<button type="button" ${currentPage>=totalPages?'disabled':''} onclick="goPage(${currentPage+1})">下一页</button>`;
+  container.innerHTML = html;
+}
+function goPage(p) { state.page=p; loadFiles(); }
+
+// ==================== 快速添加标签 ====================
+function quickAddTag(dimId) {
+  // 关闭其他打开的快速添加
+  document.querySelectorAll('.tag-quick-add').forEach(el => el.style.display = 'none');
+  const addBox = document.getElementById('quickAdd-' + dimId);
+  if (addBox) {
+    addBox.style.display = 'flex';
+    const input = document.getElementById('quickTagName-' + dimId);
+    input.value = '';
+    input.focus();
+  }
+}
+function onQuickTagKey(event, dimId) {
+  if (event.key === 'Enter') submitQuickTag(dimId);
+  if (event.key === 'Escape') cancelQuickTag(dimId);
+}
+async function submitQuickTag(dimId) {
+  const input = document.getElementById('quickTagName-' + dimId);
+  const name = input.value.trim();
+  if (!name) return;
+  // 生成随机颜色
+  const colors = ['#E74C3C','#3498DB','#27AE60','#F39C12','#9B59B6','#1ABC9C','#E67E22','#2ECC71'];
+  const color = colors[Math.floor(Math.random() * colors.length)];
+  try {
+    await api('/tags', { method: 'POST', body: JSON.stringify({ dimension_id: dimId, name, color }), headers: { 'Content-Type': 'application/json' } });
+    showToast(`已添加标签「${name}」`);
+    await loadFilterData();
+  } catch(e) {
+    showToast('添加失败：' + e.message);
+  }
+  cancelQuickTag(dimId);
+}
+function cancelQuickTag(dimId) {
+  const addBox = document.getElementById('quickAdd-' + dimId);
+  if (addBox) { addBox.style.display = 'none'; addBox.querySelector('input').value = ''; }
+}
+
+// ==================== 初始化 ====================
+// 扩展名图标和标签映射
+const EXT_GROUPS = [
+  { exts: ['xlsx', 'xls'], icon: '📊', label: 'Excel' },
+  { exts: ['xlsm'], icon: '📊', label: 'Excel 宏' },
+  { exts: ['docx', 'doc'], icon: '📝', label: 'Word' },
+  { exts: ['pptx', 'ppt'], icon: '📽️', label: 'PPT' },
+  { exts: ['pdf'], icon: '📄', label: 'PDF' },
+  { exts: ['xmind'], icon: '🧠', label: 'XMind' },
+  { exts: ['txt', 'log', 'md'], icon: '📃', label: 'TXT' },
+  { exts: ['csv'], icon: '📊', label: 'CSV' },
+  { exts: ['html', 'htm'], icon: '🌐', label: 'HTML' },
+  { exts: ['json', 'xml', 'yaml', 'yml'], icon: '📋', label: '数据' },
+  { exts: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'], icon: '🖼️', label: '图片' },
+  { exts: ['zip', 'rar', '7z', 'gz', 'tar'], icon: '📦', label: '压缩包' },
+  { exts: ['mp4', 'avi', 'mkv', 'mov', 'wmv'], icon: '🎬', label: '视频' },
+  { exts: ['mp3', 'wav', 'flac', 'aac', 'ogg'], icon: '🎵', label: '音频' },
+  { exts: ['py', 'js', 'ts', 'cpp', 'c', 'h', 'java', 'go', 'rs'], icon: '💻', label: '代码' },
+];
+
+function getExtMeta(ext) {
+  for (const g of EXT_GROUPS) {
+    if (g.exts.includes(ext)) return g;
+  }
+  return { icon: '📁', label: ext.toUpperCase() };
+}
+
+async function renderExtFilterBar() {
+  try {
+    const filters = await api('/scan-filters');
+    const extensions = (filters && filters.extensions) || [];
+    if (extensions.length === 0) return;
+    
+    // 将扩展名归到分组
+    const grouped = {}; // groupKey → {icon, label, exts}
+    for (const ext of extensions) {
+      const meta = getExtMeta(ext);
+      const key = meta.icon + '|' + meta.label;
+      if (!grouped[key]) grouped[key] = { icon: meta.icon, label: meta.label, exts: [] };
+      grouped[key].exts.push(ext);
+    }
+    
+    const bar = document.getElementById('extFilterBar');
+    // 保留 label 和 clear button，清空中间的 chips
+    const clearBtn = bar.querySelector('.btn-clear-filter');
+    bar.querySelectorAll('.ext-chip').forEach(c => c.remove());
+    
+    // 按分组插入 chips（在 clear button 之前）
+    for (const [key, grp] of Object.entries(grouped)) {
+      const extsStr = grp.exts.join(',');
+      const chip = document.createElement('span');
+      const isHl = state.highlightedExts.length > 0 && state.highlightedExts.some(e => extsStr.split(',').includes(e));
+      chip.className = 'ext-chip' + (isHl ? ' highlighted' : '');
+      chip.setAttribute('data-exts', extsStr);
+      chip.onclick = function() { toggleExtFilter(chip, extsStr); };
+      chip.oncontextmenu = function(e) { showHighlightContextMenu(e, 'ext', extsStr, chip); };
+      chip.innerHTML = `<span class="ext-icon">${grp.icon}</span>${grp.label}`;
+      bar.insertBefore(chip, clearBtn);
+    }
+  } catch(e) {
+    console.log('加载扩展名过滤失败');
+  }
+}
+
+function togglePathFilter(el, path) {
+  const isActive = el.classList.contains('active');
+  if (isActive) {
+    el.classList.remove('active');
+    state.activePathPrefixes = state.activePathPrefixes.filter(p => p !== path);
+  } else {
+    el.classList.add('active');
+    state.activePathPrefixes.push(path);
+  }
+  state.page = 1;
+  loadFiles();
+}
+
+function toggleSourceFilter(el, source) {
+  document.querySelectorAll('.source-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  state.activeSource = source;
+  state.page = 1;
+  loadFiles();
+}
+
+async function renderPathFilterBar() {
+  try {
+    const configs = await api('/scan-config');
+    if (configs.length === 0) return;
+    
+    const bar = document.getElementById('pathFilterBar');
+    bar.style.display = 'flex';
+    // 清除旧 chips（保留 label）
+    bar.querySelectorAll('.path-chip').forEach(c => c.remove());
+    
+    for (const c of configs) {
+      const p = c.path;
+      if (!p) continue;
+      const chip = document.createElement('span');
+      chip.className = 'path-chip';
+      chip.title = p;
+      chip.onclick = function() { togglePathFilter(chip, p); };
+      // 截断显示：取路径最后两级
+      const parts = p.replace(/[/\\]+/g, '/').replace(/\/$/, '').split('/');
+      const display = parts.length > 1 ? '.../' + parts.slice(-2).join('/') : p;
+      const icon = c.type === 'feishu' ? '🔷' : '📁';
+      chip.innerHTML = `${icon} ${display}`;
+      bar.appendChild(chip);
+    }
+  } catch(e) {
+    console.log('加载路径过滤失败');
+  }
+}
+
+// ==================== 皮肤切换 ====================
+const SKINS = ['lab', 'instrument', 'cyber', 'ember'];
+const SKIN_EMOJI = { lab: '⚪', instrument: '🌑', cyber: '🟢', ember: '🟠' };
+
+function loadSkin() {
+  const saved = localStorage.getItem('tagSkin') || 'lab';
+  document.documentElement.setAttribute('data-skin', saved);
+  document.getElementById('skinToggle').textContent = SKIN_EMOJI[saved] || '🎨';
+}
+function cycleSkin() {
+  const current = document.documentElement.getAttribute('data-skin') || 'lab';
+  const idx = SKINS.indexOf(current);
+  const next = SKINS[(idx + 1) % SKINS.length];
+  document.documentElement.setAttribute('data-skin', next);
+  document.getElementById('skinToggle').textContent = SKIN_EMOJI[next];
+  localStorage.setItem('tagSkin', next);
+}
+loadSkin();
+
+async function init() {
+  try {
+    const vt = await api('/version');
+    const el = document.getElementById('versionInfo');
+    el.textContent = 'v' + vt.version;
+    el.addEventListener('click', showChangelog);
+  } catch(e) { document.getElementById('versionInfo').textContent = 'v--'; }
+  try {
+    const lt = await api('/scan/last-time');
+    document.getElementById('scanTimeInfo').textContent = '上次扫描：' + (lt.lastTime?new Date(lt.lastTime).toLocaleString('zh-CN'):'--');
+  } catch(e) { console.log('后端未启动'); }
+  try {
+    // 恢复高亮状态（后端持久化，刷新/重启不再丢失）
+    const hs = await api('/highlight-state');
+    state.highlightedTagIds = Array.isArray(hs.tag_ids) ? hs.tag_ids : [];
+    state.highlightedExts = Array.isArray(hs.exts) ? hs.exts : [];
+    state.highlightedGroupIds = Array.isArray(hs.group_ids) ? hs.group_ids : [];
+  } catch(e) { console.log('高亮状态加载失败（首次使用可忽略）'); }
+  try {
+    await loadFilterData();
+    await loadFiles();
+    // ── URL jump highlight (from task lens) ──
+    (function() {
+      const q = new URLSearchParams(window.location.search);
+      const fileId = q.get('file');
+      const filePath = q.get('path');
+      const fileName = q.get('name');
+      if (!fileId && !filePath && !fileName) return;
+      setTimeout(async () => {
+        let target = null;
+        let resolvedId = fileId;
+        const rows = document.querySelectorAll('.file-row');
+        // 1) match by file ID in current page
+        if (resolvedId) {
+          target = document.querySelector('.file-row[data-id="' + resolvedId + '"]');
+        }
+        // 2) match by path
+        if (!target && filePath) {
+          for (const r of rows) {
+            if (r.getAttribute('data-file-path') === filePath) { target = r; break; }
+          }
+        }
+        // 3) match by name
+        if (!target && fileName) {
+          for (const r of rows) {
+            if (r.getAttribute('data-file-name') === fileName) { target = r; break; }
+          }
+        }
+        // 4) not in current page — search via API, then keyword-filter to surface it
+        if (!target && (filePath || fileName)) {
+          try {
+            const keyword = encodeURIComponent(fileName || filePath);
+            const res = await fetch('/api/files?keyword=' + keyword + '&page_size=200');
+            const data = await res.json();
+            if (data.data && data.data.length > 0) {
+              const exact = filePath
+                ? data.data.find(f => f.file_path === filePath)
+                : data.data.find(f => f.file_name === fileName);
+              resolvedId = exact ? String(exact.id) : String(data.data[0].id);
+            }
+          } catch(e) {}
+          if (resolvedId) {
+            // Keyword-search to bring the file onto page 1, then highlight
+            document.getElementById('searchInput').value = fileName || '';
+            await loadFiles();
+            target = document.querySelector('.file-row[data-id="' + resolvedId + '"]');
+          }
+        }
+        if (target) {
+          target.classList.add('flash-highlight');
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 500);
+    })();
+  } catch(e) { console.log('加载数据失败，请先启动后端'); }
+  renderExtFilterBar();
+  renderPathFilterBar();
+}
+init();
+</script>
+</body>
+</html>
