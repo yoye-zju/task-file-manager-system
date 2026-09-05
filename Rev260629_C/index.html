@@ -16,16 +16,12 @@
     <div class="logo">
       <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="#4F46E5" opacity="0.15"/><circle cx="16" cy="16" r="6" fill="#4F46E5"/><circle cx="16" cy="16" r="10" stroke="#4F46E5" stroke-width="2" stroke-dasharray="4 3"/><circle cx="16" cy="6" r="2" fill="#818CF8"/><circle cx="26" cy="16" r="2" fill="#818CF8"/><circle cx="6" cy="16" r="2" fill="#818CF8"/><circle cx="16" cy="26" r="2" fill="#818CF8"/></svg>
       <span>任务透视镜</span>
-      <span class="version-badge" id="version-badge" title="点击查看更新记录">R3.30</span>
+      <span class="version-badge" id="version-badge" title="点击查看更新记录">R3.38</span>
     </div>
   </div>
   <nav class="sidebar-nav">
     <button class="nav-item active" data-view="dashboard">
       <span class="icon">🌐</span> <span>全局仪表盘</span>
-    </button>
-    <button class="nav-item" data-view="list">
-      <span class="icon">📋</span> <span>任务列表</span>
-      <span class="badge" id="task-count">0</span>
     </button>
     <button class="nav-item" data-view="timeline">
       <span class="icon">📅</span> <span>日历</span>
@@ -45,30 +41,10 @@
     </button>
     <div class="nav-divider"></div>
     <div class="quick-actions">
-      <button class="quick-action-btn" id="qa-today" onclick="quickFilter('todayTodo')">
-        <span class="qa-icon">📅</span>
-        <span class="qa-text">今日待办</span>
-        <span class="qa-badge" id="badge-today">0</span>
-      </button>
-      <button class="quick-action-btn" id="qa-week" onclick="quickFilter('weekDue')">
-        <span class="qa-icon">📆</span>
-        <span class="qa-text">本周到期</span>
-        <span class="qa-badge" id="badge-week">0</span>
-      </button>
-      <button class="quick-action-btn" id="qa-month" onclick="quickFilter('monthDue')">
-        <span class="qa-icon">🗓️</span>
-        <span class="qa-text">本月到期</span>
-        <span class="qa-badge" id="badge-month">0</span>
-      </button>
-      <button class="quick-action-btn" id="qa-timeline-tl" onclick="quickFilter('timelineTable')">
+      <button class="quick-action-btn qa-timeline-feature" id="qa-timeline-tl" onclick="quickFilter('timelineTable')" title="时间线表格视图：全部内容块按时间排列（快捷键 2）">
         <span class="qa-icon">🕐</span>
         <span class="qa-text">时间线</span>
         <span class="qa-badge" id="badge-timeline-tl">0</span>
-      </button>
-      <button class="quick-action-btn" id="qa-done" onclick="quickFilter('done')">
-        <span class="qa-icon">✅</span>
-        <span class="qa-text">已完成</span>
-        <span class="qa-badge" id="badge-done">0</span>
       </button>
       <div class="quick-action-row">
         <button class="quick-action-btn quick-action-half" id="qa-archive-overlay" onclick="quickFilter('archiveOverlay')">
@@ -127,8 +103,6 @@
   <div class="content" id="content">
     <!-- Dashboard View -->
     <div class="view-panel active" id="view-dashboard"></div>
-    <!-- List View -->
-    <div class="view-panel" id="view-list"></div>
     <!-- Timeline View -->
     <div class="view-panel" id="view-timeline"></div>
     <!-- Matrix View -->
@@ -340,7 +314,10 @@
             </div>
             <div class="form-row full">
               <div class="form-field form-field-full">
-                <label>后置任务（完成后才能开始的任务，点击 × 移除）</label>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                  <label style="margin:0;">后置任务（完成后才能开始的任务，点击 × 移除）</label>
+                  <button type="button" class="dep-create-btn" id="btn-quick-create-next" title="打开新建任务窗口，自动填入当前任务为前置、开始时间为前置截止日期">＋ 新建</button>
+                </div>
                 <div class="dep-selector" id="next-selector">
                   <div class="dep-chips" id="next-chips">
                     <input type="text" class="dep-search-input" id="next-search" placeholder="🔍 搜索并添加后置任务..." autocomplete="off">

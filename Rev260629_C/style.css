@@ -55,6 +55,31 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
 .qa-icon { font-size:16px; width:20px; text-align:center; }
 .qa-text { flex:1; text-align:left; font-size:12px; color:var(--gray-700); font-weight:500; }
 .qa-badge { background:var(--primary); color:white; font-size:10px; padding:1px 6px; border-radius:8px; font-weight:600; }
+
+/* R3.38：「时间线」入口按钮醒目化——未激活也用淡紫渐变底+主题色描边，在白底按钮群里一眼可见 */
+.quick-action-btn.qa-timeline-feature {
+  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+  border: 1.5px solid var(--primary-light);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.18);
+}
+.quick-action-btn.qa-timeline-feature .qa-icon { font-size: 18px; width: 22px; }
+.quick-action-btn.qa-timeline-feature .qa-text { color: var(--primary); font-weight: 700; font-size: 13px; }
+.quick-action-btn.qa-timeline-feature .qa-badge { background: var(--primary); color: #fff; }
+.quick-action-btn.qa-timeline-feature:hover {
+  background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%);
+  border-color: var(--primary);
+  transform: translateX(4px);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.28);
+}
+/* 激活态：实心主题色渐变 + 强阴影（覆盖未激活的淡紫样式） */
+.quick-action-btn.qa-timeline-feature.active {
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+  border-color: var(--primary);
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.45);
+}
+.quick-action-btn.qa-timeline-feature.active .qa-text { color: #fff; }
+.quick-action-btn.qa-timeline-feature.active .qa-icon { filter: brightness(1.1); }
+.quick-action-btn.qa-timeline-feature.active .qa-badge { background: #fff; color: var(--primary); }
 .quick-action-row { display:flex; gap:6px; }
 .quick-action-half { flex:1; padding:8px 10px; font-size:11px; }
 .quick-action-half .qa-text { font-size:11px; }
@@ -388,6 +413,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
 .entity-group-label-loose { background: #FEF3C7; color: #B45309; border: 1.5px dashed #F59E0B; font-weight: 700; }
 .entity-row-break { display: none; }
 .tl-table-filter-bar .entity-row-break { flex-basis: 100%; height: 0; display: block; }
+/* 时间线表格搜索框（R3.31） */
+#tl-search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-bg); }
+#tl-search-input::placeholder { color: var(--gray-400); }
 .tag-btn.type-task.active { background: #6B7280; border-color: #6B7280; }
 .tag-btn.type-record.active { background: #8B5CF6; border-color: #8B5CF6; }
 .tag-btn.type-schedule.active { background: #F59E0B; border-color: #F59E0B; }
@@ -767,6 +795,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
 .quote-mgmt-author { font-size:12px; color:var(--gray-500); margin-top:4px; }
 .quote-mgmt-delete { background:none; border:none; font-size:16px; cursor:pointer; color:var(--gray-400); padding:2px 6px; border-radius:4px; transition:all 0.15s; flex-shrink:0; }
 .quote-mgmt-delete:hover { color:var(--danger); background:#FEE2E2; }
+.quote-mgmt-edit { background:none; border:none; font-size:16px; cursor:pointer; color:var(--gray-400); padding:2px 6px; border-radius:4px; transition:all 0.15s; flex-shrink:0; }
+.quote-mgmt-edit:hover { color:var(--primary); background:var(--primary-bg); }
 .quote-add-form { background:var(--gray-50); border-radius:8px; padding:14px; margin-bottom:16px; }
 .quote-add-form .form-field { margin-bottom:8px; }
 .quote-add-form input { width:100%; padding:8px 10px; border:2px solid var(--gray-200); border-radius:8px; font-size:13px; outline:none; font-family:inherit; transition:var(--transition); }
@@ -876,6 +906,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
 .dep-chip .chip-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
 .dep-search-input { border:none; outline:none; font-size:13px; font-family:inherit; min-width:120px; flex:1; background:transparent; padding:2px 0; }
 .dep-search-input::placeholder { color:var(--gray-400); }
+/* R3.33：后置任务「＋ 新建」快速创建按钮 */
+.dep-create-btn { flex-shrink:0; padding:2px 10px; font-size:12px; font-weight:600; color:var(--primary); background:var(--primary-bg); border:1px solid var(--primary); border-radius:6px; cursor:pointer; transition:var(--transition); white-space:nowrap; line-height:1.6; }
+.dep-create-btn:hover { background:var(--primary); color:white; }
 .dep-dropdown {
   position:fixed; max-height:400px; overflow-y:auto; background:white; border:1px solid var(--gray-200); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.15); z-index:200; display:none;
 }

@@ -53,7 +53,7 @@ check('类型按钮包含「想法」', renderCode.includes('💡 想法'));
 check('类型按钮共 7 个', (renderCode.match(/\['(object|kr|target|task|record|schedule|idea)','[^']+'\]/g) || []).length === 7);
 check('日期按钮仍保留', renderCode.includes('今日待办') && renderCode.includes('已逾期'));
 check('类型按钮为 tag-btn 样式', (renderCode.match(/tag-btn/g) || []).length >= 6);
-check('类型筛选接入过滤链', /\.filter\(_typeMatch\)/.test(renderCode));
+check('类型筛选接入过滤链（R3.31 起合并进短路分支）', /_tlMatch\(t\) && _typeMatch\(t\) && _entityMatch\(t\) && _doneMatch\(t\)/.test(renderCode));
 check('类型徽章用 qa-badge', (renderCode.match(/qa-badge/g) || []).length >= 5);
 check('空态文案保留', renderCode.includes('暂无内容'));
 check('分隔线存在', renderCode.includes('width:1px;height:18px'));
@@ -77,7 +77,7 @@ const testTasks = [
   { id: 9, type: 'task',     status: 'todo', deadline: today, timestamp: '20260815010000', title: '任务G', tag: '' },
 ];
 
-const fakeEl = { innerHTML: '', style: {} };
+const fakeEl = { innerHTML: '', style: {}, querySelector: () => null };
 const document = {
   getElementById: (id) => (id === 'view-timeline-table' ? fakeEl : null),
 };
@@ -111,7 +111,7 @@ const createNewContent = () => {};
 const factory = new Function(
   'document', 'tasks', 'TYPE_COLORS', 'TYPE_LABELS', 'statusMap', 'highlightedIds',
   'fileDisplayName', 'archiveOnly', 'showArchived', 'tlDateFilter', 'tlTableTypeFilter', 'tlDoneFilter',
-  'tlEntityFilters', 'renderEntityFilterButtons', 'toggleTlTableEntityFilter',
+  'tlEntityFilters', 'tlSearch', 'tlSearchInput', 'computeSearchVisibleSet', 'renderEntityFilterButtons', 'toggleTlTableEntityFilter',
   'isEntityHighlighted', 'entityStateClass', 'nearestObjectIdOf', 'shortTitle',
   'DEFAULT_PRIORITY', 'PRIORITY_COLORS',
   'isArchivedOf', 'getProgressColor', 'showFileHoverCard', 'scheduleHideFileHoverCard',
@@ -121,8 +121,8 @@ const factory = new Function(
 );
 const api = factory(
   document, testTasks, TYPE_COLORS, TYPE_LABELS, statusMap, highlightedIds,
-  fileDisplayName, false, false, null, null, false, null,
-  renderEntityFilterButtons, toggleTlTableEntityFilter, isEntityHighlighted, entityStateClass, nearestObjectIdOf, shortTitle,
+  fileDisplayName, false, false, null, null, false, null, '', null,
+  function computeSearchVisibleSet() { return new Set(); }, renderEntityFilterButtons, toggleTlTableEntityFilter, isEntityHighlighted, entityStateClass, nearestObjectIdOf, shortTitle,
   '紧急不重要', {},
   isArchivedOf, getProgressColor, showFileHoverCard, scheduleHideFileHoverCard,
   handleListFileChipClick, editTask, toggleArchived, cycleTaskStatus,

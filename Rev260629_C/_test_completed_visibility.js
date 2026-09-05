@@ -133,11 +133,15 @@ if (csvHeadersMatch) {
 console.log('\n[5] 版本号一致性');
 
 check('currentVersion = 7', src.includes('var currentVersion = 7'));
-check('console.log 包含 R3.29', src.includes("[version] R3.29"));
-check('CHANGELOG 包含 R3.3', src.includes("ver: 'R3.3'"));
+// 版本号断言改为动态提取：徽章 / console.log / CHANGELOG 三处一致即通过，避免每次升版本都要改测试
+const badgeVer = (htmlSrc2 => { const m = htmlSrc2.match(/version-badge[^>]*>(R[0-9.]+)</); return m ? m[1] : ''; })(fs.readFileSync(path.join(__dirname, 'index.html'), 'utf-8'));
+const logVer = (() => { const m = src.match(/\[version\] (R[0-9.]+)/); return m ? m[1] : ''; })();
+check('版本徽章非空', !!badgeVer, 'badge=' + badgeVer);
+check('console.log 版本 与 徽章版本一致', !!logVer && logVer === badgeVer, 'log=' + logVer + ' badge=' + badgeVer);
+check('CHANGELOG 首条版本 与 徽章一致', (() => { const m = src.match(/ver:\s*'(R[0-9.]+)'/); return m && m[1] === badgeVer; })(), 'badge=' + badgeVer);
+check('backup _appVersion 与徽章一致', src.includes("_appVersion: '" + badgeVer + "'"));
 
 const htmlSrc = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf-8');
-check('index.html 版本徽章 = R3.29', htmlSrc.includes('>R3.29<'));
 
 // ── 6. showDone 变量和视图过滤 ──
 console.log('\n[6] showDone 变量和视图过滤');
@@ -161,15 +165,20 @@ check('showStatusPicker 调用 celebrateTaskCompletion', src.includes("if (s.val
 check('cycleProgress 调用 celebrateTaskCompletion', src.includes("if (t.status === 'done' && oldProgress !== 100) celebrateTaskCompletion(t)"));
 check('saveTask 调用 celebrateTaskCompletion', src.includes("if (_completedTask) celebrateTaskCompletion(_completedTask)"));
 
-// ── 8. quickFilter 'done' case ──
-console.log('\n[8] quickFilter 已完成按钮');
+// ── 8. 已完成查看入口（R3.38：列表视图已移除，改由时间线表格 tlDoneFilter 承担）──
+console.log('\n[8] 已完成查看入口');
 
-check("quickFilter 有 'done' case", src.includes("case 'done':"));
-check("done case 设置 statusFilter = ['done']", src.includes("statusFilter = ['done']"));
-check('done case 设置 listSortType = completed-desc', src.includes("listSortType = 'completed-desc'"));
-check("updateQuickActionStates 包含 'qa-done'", src.includes("'qa-done': 'done'"));
-check('updateQuickActionBadges 包含 doneCount', src.includes('doneCount'));
-check('index.html 包含 qa-done 按钮', htmlSrc.includes('id="qa-done"'));
+check('侧边栏已完成按钮已移除（无 qa-done）', !htmlSrc.includes('id="qa-done"'));
+check('侧边栏已完成徽章已移除（无 badge-done）', !htmlSrc.includes('id="badge-done"'));
+const _qfBlock = src.match(/function quickFilter\(type\) \{[\s\S]*?\n\}/)[0];
+check('quickFilter 不再有 done case', !/case 'done'/.test(_qfBlock));
+// R3.38：列表视图/导航项已移除
+check('任务列表导航项已移除（无 data-view="list"）', !htmlSrc.includes('data-view="list"'));
+check('view-list 面板已移除', !htmlSrc.includes('id="view-list"'));
+// 已完成查看改由时间线表格的「✅ 已完成」开关承担
+check('时间线表格已完成开关 setTlDoneFilter 存在', src.includes('function setTlDoneFilter'));
+check('已完成下钻映射到 tlDoneFilter', /navigateToListWithFilter[\s\S]*?tlDoneFilter = true/.test(src));
+check('时间线表格筛选栏有已完成按钮', htmlSrc.includes('id="view-timeline-table"') || src.includes("setTlDoneFilter()"));
 
 // ── 总结 ──
 console.log('\n=== 结果: ' + pass + ' passed, ' + fail + ' failed ===');

@@ -38,6 +38,9 @@ function isArchivedOf(t) {
   return v === true || v === 'true' || v === 1 || v === '1';
 }
 let tlEntityFilters = null;      // 时间线快速筛选：实体ID
+let tlSearch = '';               // 时间线表格搜索关键词（R3.31：非空时搜索优先于其他筛选）
+let tlSearchComposing = false;   // R3.31 修复：中文输入法组合状态标志（组合中不触发防抖渲染，避免打断 IME）
+let tlSearchInput = null;        // R3.31 修复：搜索框节点缓存——只创建一次、渲染时移动节点而非重建，保护 IME 组合状态
 let boardActiveTags = null;      // 团队看板快速筛选：标签
 let boardEntityFilters = null;   // 团队看板快速筛选：实体ID
 let boardShowAll = false;        // 团队看板：显示全部/仅活跃
@@ -93,6 +96,15 @@ function debounce(fn, ms) {
 }
 // 时间线日历视图搜索输入的防抖版重渲染（输入停止 200ms 后只重渲染一次）
 const debouncedRenderTimeline = debounce(() => renderTimeline(), 200);
+// 时间线表格搜索输入防抖（R3.31）：停止输入 200ms 后重渲染。
+// IME 保护（R3.31 修复）：① 组合中（tlSearchComposing）跳过渲染，等 compositionend 重新触发；
+// ② 搜索框节点复用（tlSearchInput 只创建一次，渲染时移动节点而非重建），组合结束后的渲染不打断输入法会话
+const debouncedRenderTimelineTable = debounce(function() {
+  if (tlSearchComposing) return;   // 中文输入法组合中：不重渲染，避免打断组词
+  const hadFocus = tlSearchInput && document.activeElement === tlSearchInput;
+  renderTimelineTable();
+  if (hadFocus && tlSearchInput) tlSearchInput.focus();   // 节点移动后恢复焦点
+}, 200);
 
 function loadData() {
   const saved = localStorage.getItem('ai-task-lens-tasks');
@@ -490,7 +502,8 @@ function renderAll() {
   // 只渲染当前激活的视图，大幅提升性能
   switch (currentView) {
     case 'dashboard': renderDashboard(); break;
-    case 'list': renderList(); break;
+    // R3.38：任务列表视图已移除，任何残留的 'list' 状态统一落到时间线表格视图
+    case 'list': renderTimelineTable(); break;
     case 'timeline': renderTimeline(); break;
     case 'matrix': renderMatrix(); break;
     case 'board': renderBoard(); break;
@@ -502,8 +515,11 @@ function renderAll() {
 }
 
 function updateTaskCount() {
+  // R3.38：task-count 徽章随「任务列表」导航项一并移除；保留计数逻辑，节点不存在时安全跳过
+  const el = document.getElementById('task-count');
+  if (!el) return;
   const ct = tasks.filter(t => t.status !== 'done' && !isArchivedOf(t)).length;
-  document.getElementById('task-count').textContent = ct;
+  el.textContent = ct;
 }
 
 function countByType(type) { return tasks.filter(t => t.type === type).length; }
@@ -552,7 +568,8 @@ function renderDashboard() {
   const kissItems = KISS_META.map(m => ({
     ...m,
     tasks: tasks.filter(t => {
-      const text = ((t.title||'') + ' ' + (t.description||'')).toUpperCase();
+      // R3.35 修复：描述字段名为 desc（非 description），否则描述里的标记永远扫不到
+      const text = ((t.title||'') + ' ' + (t.desc||'')).toUpperCase();
       return text.includes('[' + m.tag + ']');
     })
   }));
@@ -676,106 +693,84 @@ function renderDashboard() {
   renderQuotesPanel();
 }
 
+// R3.38：任务列表视图已移除，仪表盘等所有「下钻筛选」入口统一改道到时间线表格视图。
+// 可承接的筛选映射到时间线表格的 tl* 变量；暂不支持的（进行中/阻塞等状态、KISS、无截止、标签）
+// 跳转时间线表格并 toast 提示，不报错、不白屏。函数名保留（仪表盘多处调用）。
 function navigateToListWithFilter(type, value) {
+  // 先重置时间线表格全部筛选，避免叠加
+  tlDateFilter = null;
+  tlTableTypeFilter = null;
+  tlDoneFilter = false;
+  tlEntityFilters = null;
+  tlSearch = '';
   listActiveTags = null;
   listKissFilter = null;
   dateFilter = null;
-  activeQuickFilter = null;   // 从仪表盘等入口进来时，清掉侧边栏快速筛选的点亮态
-  
+  activeQuickFilter = 'timelineTable';   // 点亮侧边栏「时间线」按钮
+  if (tlSearchInput) tlSearchInput.value = '';
+
+  // 暂不支持的下钻：跳到时间线表格但给提示
+  const unsupported = {
+    'blocked': '「被阻塞」状态筛选暂未在时间线视图支持，后续版本补齐',
+    'progress': '「进行中」状态筛选暂未在时间线视图支持，后续版本补齐',
+    'todo': '「待办」状态筛选暂未在时间线视图支持，后续版本补齐',
+    'preparing': '「准备中」状态筛选暂未在时间线视图支持，后续版本补齐',
+    'cancel': '「已取消」状态筛选暂未在时间线视图支持，后续版本补齐',
+  };
+  let toastMsg = null;
+  let focusSearch = false;
+
   if (type === 'type') {
-    typeFilter = [value];
-    statusFilter = [];
+    tlTableTypeFilter = value;
   } else if (type === 'status') {
-    statusFilter = [value];
-    typeFilter = [];
-    // 「已完成」视图默认按完成时间 新→旧 排序
-    if (value === 'done') listSortType = 'completed-desc';
+    if (value === 'done') {
+      tlDoneFilter = true;   // 已完成可承接（时间线表格有「✅ 已完成」开关）
+    } else {
+      toastMsg = unsupported[value] || ('该状态筛选暂未在时间线视图支持：' + value);
+    }
   } else if (type === 'overdue') {
-    statusFilter = [];
-    typeFilter = [];
-    dateFilter = 'overdue';
+    tlDateFilter = 'overdue';
   } else if (type === 'noDeadline') {
-    statusFilter = [];
-    typeFilter = ['task'];
+    toastMsg = '「无截止日期」筛选暂未在时间线视图支持，后续版本补齐';
   } else if (type === 'tag') {
-    statusFilter = [];
-    typeFilter = [];
-    listActiveTags = value;
-    listKissFilter = null;
+    toastMsg = '标签下钻暂未在时间线视图支持，后续版本补齐';
   } else if (type === 'kiss') {
-    statusFilter = [];
-    typeFilter = [];
-    listActiveTags = null;
-    listKissFilter = value;
+    toastMsg = 'KISS 复盘下钻暂未在时间线视图支持，后续版本补齐';
   } else if (type === 'title') {
-    statusFilter = [];
-    typeFilter = [];
-    dateFilter = null;
+    tlSearch = value;
+    if (tlSearchInput) tlSearchInput.value = value;
+    focusSearch = true;
   } else if (type === 'todayTodo') {
-    statusFilter = [];
-    typeFilter = [];
-    dateFilter = 'todayTodo';
-    activeQuickFilter = 'todayTodo';
+    tlDateFilter = 'todayTodo';
   } else if (type === 'weekDeadline') {
-    statusFilter = [];
-    typeFilter = [];
-    dateFilter = 'weekDeadline';
-    activeQuickFilter = 'weekDue';
+    tlDateFilter = 'weekDue';
   } else if (type === 'monthDeadline') {
-    statusFilter = [];
-    typeFilter = [];
-    dateFilter = 'monthDeadline';
-    activeQuickFilter = 'monthDue';
+    tlDateFilter = 'monthDue';
   } else if (type === 'insight') {
     const idx = parseInt(value);
     const insights = generateInsights();
     if (insights[idx]) {
       const insight = insights[idx];
-      if (insight.text.includes('逾期')) {
-        navigateToListWithFilter('overdue');
-        return;
-      } else if (insight.text.includes('阻塞')) {
-        navigateToListWithFilter('status', 'blocked');
-        return;
-      } else if (insight.text.includes('没有截止日期')) {
-        navigateToListWithFilter('noDeadline');
-        return;
-      } else {
+      if (insight.text.includes('逾期')) { navigateToListWithFilter('overdue'); return; }
+      else if (insight.text.includes('阻塞')) { navigateToListWithFilter('status', 'blocked'); return; }
+      else if (insight.text.includes('没有截止日期')) { navigateToListWithFilter('noDeadline'); return; }
+      else {
         const match = insight.text.match(/「([^」]+)」/);
-        if (match) {
-          navigateToListWithFilter('title', match[1]);
-          return;
-        }
+        if (match) { navigateToListWithFilter('title', match[1]); return; }
       }
     }
-    return;
+    // 无可解析项：直接进时间线表格
   }
-  
-  const listNavBtn = document.querySelector('.nav-item[data-view="list"]');
-  if (listNavBtn) {
-    listNavBtn.click();
-  } else {
-    currentView = 'list';
-    document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('view-list').classList.add('active');
-    renderAll();
+
+  activateTimelineTable(true);
+
+  if (toastMsg) showToast(toastMsg, 'warn');
+  if (focusSearch) {
+    setTimeout(() => {
+      const si = document.getElementById('tl-search-input');
+      if (si) { si.focus(); si.select(); }
+    }, 120);
   }
-  
-  setTimeout(() => {
-    const currentDateFilter = dateFilter;
-    const listFilterInput = document.getElementById('list-filter');
-    
-    if (type === 'title') {
-      searchQuery = value;
-      if (listFilterInput) listFilterInput.value = value;
-    } else {
-      searchQuery = '';
-      if (listFilterInput) listFilterInput.value = '';
-    }
-    dateFilter = currentDateFilter;
-    updateQuickActionStates();   // 同步侧边栏按钮点亮态
-    filterList();
-  }, 100);
 }
 
 function escapeHtml(str) {
@@ -851,6 +846,9 @@ let treeCollapsed = {}; // 折叠状态 { id: true/false }
 
 function renderList() {
   const el = document.getElementById('view-list');
+  // R3.38：任务列表视图（view-list 面板）已移除。renderList 函数体保留为死代码
+  // （clearAllFilters/列筛选等共用逻辑仍引用），但任何意外调用都安全转时间线表格，杜绝 null 报错。
+  if (!el) { renderTimelineTable(); return; }
   if (tasks.length === 0) {
     el.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-icon">📋</div><h3>还没有任务</h3><p>点击顶部「+ 添加任务」开始吧！</p></div></div>`;
     return;
@@ -1525,6 +1523,34 @@ function nearestObjectIdOf(node) {
   return null;                           // 走到根都没撞到 Object
 }
 
+// 时间线搜索匹配（R3.31）：标题/描述/标签/负责人，大小写不敏感；null/损坏数据不崩
+function tlSearchMatch(t, kw) {
+  if (!kw) return true;
+  if (!t) return false;
+  kw = kw.toLowerCase();
+  return String(t.title || '').toLowerCase().includes(kw)
+    || String(t.desc || '').toLowerCase().includes(kw)
+    || String(t.tag || '').toLowerCase().includes(kw)
+    || String(t.assignee || '').toLowerCase().includes(kw);
+}
+// 计算搜索可见集合（R3.31）= 命中的 id + 全部祖先 id（沿 parentId 回溯；byId Map 缓存 O(N)，seen guard 防环形引用）
+function computeSearchVisibleSet(tasks, kw) {
+  const byId = new Map();
+  (tasks || []).forEach(t => byId.set(t.id, t));
+  const visible = new Set();
+  (tasks || []).forEach(t => {
+    if (!tlSearchMatch(t, kw)) return;
+    let cur = t, seen = new Set();
+    while (cur) {
+      if (seen.has(cur.id)) break;   // 环形引用安全
+      seen.add(cur.id);
+      visible.add(cur.id);
+      cur = (cur.parentId != null && cur.parentId !== '') ? byId.get(cur.parentId) : null;
+    }
+  });
+  return visible;
+}
+
 function renderEntityFilterButtons(activeId, toggleFn, useHidden, wrapLines = false) {
   // 已归档的实体不进快速筛选栏 —— 归档意味着「从日常视野里移走」，
   // 若仍出现在筛选栏，等于归档没生效。要看归档内容走「归档」视图。
@@ -1798,7 +1824,8 @@ function filterList() {
       matchTag = (type === listActiveTags) || (rowTag === listActiveTags);
     }
     if (listKissFilter !== null) {
-      const text = ((taskData.title||'') + ' ' + (taskData.description||'')).toUpperCase();
+      // R3.35 修复：描述字段名为 desc（非 description），与上方关键词搜索保持一致
+      const text = ((taskData.title||'') + ' ' + (taskData.desc||'')).toUpperCase();
       matchTag = matchTag && text.includes('[' + listKissFilter + ']');
     }
     let matchEntity = true;
@@ -2172,13 +2199,13 @@ async function _filesShow(id) {
   else if (r && r.error) showToast(r.error, 'error');
 }
 function navigateToTaskFromFile(taskId) {
-  // 跳转到列表并展开任务
-  const navBtn = document.querySelector('.nav-item[data-view="list"]');
-  if (navBtn) navBtn.click();
+  // R3.38：任务列表视图已移除，改为跳转到时间线表格视图并定位/打开任务
+  activateTimelineTable(true);
   setTimeout(() => {
-    const row = document.querySelector('#view-list .tree-table tbody tr[data-task-id="' + taskId + '"]');
+    const row = document.querySelector('#view-timeline-table tr[data-task-id="' + taskId + '"]');
     if (row) {
       row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      row.style.transition = 'background 0.8s ease';
       row.style.background = '#FEF3C7';
       setTimeout(() => { row.style.background = ''; }, 2000);
     } else {
@@ -2798,12 +2825,12 @@ function renderTimelineTable() {
   });
   const _tlCount = (f) => _badgeCounts[f] || 0;
 
+  // R3.31 搜索：关键词非空时计算可见集合（命中行 + 祖先链），搜索优先于日期/类型/实体/已完成筛选
+  const _searchVisible = tlSearch ? computeSearchVisibleSet(tasks, tlSearch) : null;
+
   const list = (tasks || [])
     .filter(t => t && (archiveOnly ? isArchivedOf(t) : (!isArchivedOf(t) || showArchived)))
-    .filter(_tlMatch)
-    .filter(_typeMatch)
-    .filter(_entityMatch)
-    .filter(_doneMatch)
+    .filter(t => tlSearch ? (_searchVisible && _searchVisible.has(t.id)) : (_tlMatch(t) && _typeMatch(t) && _entityMatch(t) && _doneMatch(t)))
     .slice()
     .sort((a, b) => {
       const ta = String(a.timestamp || '');
@@ -2887,18 +2914,23 @@ function renderTimelineTable() {
     `;
   }).join('');
 
+  // R3.31 IME 保护：渲染前记录输入框状态（节点复用，渲染不重建输入框，避免打断输入法组合）
+  const _tlOldInput = tlSearchInput || document.getElementById('tl-search-input');
+  const _tlHadFocus = _tlOldInput && document.activeElement === _tlOldInput;
+
   el.innerHTML = `
     <div class="card" style="overflow:hidden;">
       <div class="card-header" style="display:flex;align-items:center;position:relative;">
         <span class="card-title" style="flex-shrink:0;">🕐 时间线</span>
-        <span style="font-size:12px;color:var(--gray-500);margin-left:12px;flex-shrink:0;">共 ${list.length} 条${(tlDateFilter || tlTableTypeFilter || tlEntityFilters || tlDoneFilter) ? '<b style="color:#DC2626;">（已筛选）</b>' : ''} · ${archiveOnly ? '仅已归档' : (showArchived ? '含已归档' : '排除已归档')}</span>
+        <span style="font-size:12px;color:var(--gray-500);margin-left:12px;flex-shrink:0;">共 ${list.length} 条${(tlDateFilter || tlTableTypeFilter || tlEntityFilters || tlDoneFilter || tlSearch) ? '<b style="color:#DC2626;">（已筛选）</b>' : ''} · ${archiveOnly ? '仅已归档' : (showArchived ? '含已归档' : '排除已归档')}</span>
         <div style="position:absolute;left:50%;transform:translateX(-50%);display:flex;gap:10px;">
-          <button class="btn tl-header-btn" onclick="setTlTableTypeFilter(null);setTlDateFilter(null);tlEntityFilters=null;tlDoneFilter=false;renderTimelineTable();" title="清除所有快速筛选条件" style="background:#FEF2F2;border:2px solid #F87171;color:#DC2626;font-size:13px;font-weight:600;padding:6px 16px;border-radius:8px;box-shadow:0 2px 6px rgba(220,38,38,.15);" ${(tlDateFilter || tlTableTypeFilter || tlEntityFilters || tlDoneFilter) ? '' : 'disabled'}>🗑 清除筛选</button>
+          <button class="btn tl-header-btn" onclick="tlSearch='';var _si=document.getElementById('tl-search-input');if(_si)_si.value='';setTlTableTypeFilter(null);setTlDateFilter(null);tlEntityFilters=null;tlDoneFilter=false;renderTimelineTable();" title="清除所有快速筛选条件" style="background:#FEF2F2;border:2px solid #F87171;color:#DC2626;font-size:13px;font-weight:600;padding:6px 16px;border-radius:8px;box-shadow:0 2px 6px rgba(220,38,38,.15);" ${(tlDateFilter || tlTableTypeFilter || tlEntityFilters || tlDoneFilter || tlSearch) ? '' : 'disabled'}>🗑 清除筛选</button>
           <button class="btn tl-header-btn btn-primary" onclick="createNewContent()" title="新建一条内容（任务/目标/KR 等）" style="font-size:13px;font-weight:600;padding:6px 16px;border-radius:8px;box-shadow:0 2px 8px rgba(79,70,229,.3);">➕ 创建内容</button>
         </div>
       </div>
       <div class="tag-filter-bar tl-table-filter-bar">
         <span style="font-size:12px;color:var(--gray-400);white-space:nowrap;">快速筛选：</span>
+        <span id="tl-search-slot"></span>
         <button class="tag-btn ${tlDateFilter==='todayTodo'?'active':''}" onclick="setTlDateFilter('todayTodo')" title="今天（含近3天）到期、未完成的 task/schedule">📅 今日待办 <span class="qa-badge" style="font-size:10px;">${_tlCount('todayTodo')}</span></button>
         <button class="tag-btn ${tlDateFilter==='weekDue'?'active':''}" onclick="setTlDateFilter('weekDue')" title="今天起 7 天内到期、未完成">📆 本周到期 <span class="qa-badge" style="font-size:10px;">${_tlCount('weekDue')}</span></button>
         <button class="tag-btn ${tlDateFilter==='monthDue'?'active':''}" onclick="setTlDateFilter('monthDue')" title="本月内到期、未完成">🗓️ 本月到期 <span class="qa-badge" style="font-size:10px;">${_tlCount('monthDue')}</span></button>
@@ -2929,12 +2961,32 @@ function renderTimelineTable() {
               <th>相关文件</th>
             </tr>
           </thead>
-          <tbody>${rows || '<tr><td colspan="10" style="text-align:center;color:var(--gray-400);padding:40px;">暂无内容</td></tr>'}</tbody>
+          <tbody>${rows || '<tr><td colspan="10" style="text-align:center;color:var(--gray-400);padding:40px;">' + (tlSearch ? '未找到匹配「' + tlSearch + '」的内容（搜索优先，忽略日期/类型/实体筛选）' : '暂无内容') + '</td></tr>'}</tbody>
         </table>
       </div>
       <div style="height:120px;"></div>
     </div>
   `;
+
+  // R3.31 IME 保护：搜索框节点复用——只创建一次，此后每次渲染移动同一节点到 slot 位置（永不重建）
+  const _tlSlot = el.querySelector('#tl-search-slot');
+  if (_tlSlot) {
+    if (!tlSearchInput) {
+      tlSearchInput = document.createElement('input');
+      tlSearchInput.id = 'tl-search-input';
+      tlSearchInput.type = 'text';
+      tlSearchInput.placeholder = '🔍 搜索标题/描述/标签/负责人…';
+      tlSearchInput.title = '输入关键词筛选内容块（标题/描述/标签/负责人），停止输入后生效；搜索优先于日期/类型/实体筛选；Esc 清空';
+      tlSearchInput.style.cssText = 'width:200px;padding:4px 10px;border:1px solid var(--gray-300);border-radius:6px;font-size:12px;outline:none;flex-shrink:0;';
+      tlSearchInput.addEventListener('input', function() { tlSearch = this.value; debouncedRenderTimelineTable(); });
+      tlSearchInput.addEventListener('compositionstart', function() { tlSearchComposing = true; });
+      tlSearchInput.addEventListener('compositionend', function() { tlSearchComposing = false; tlSearch = this.value; debouncedRenderTimelineTable(); });
+      tlSearchInput.addEventListener('keydown', function(e) { if (e.key === 'Escape') { this.value = ''; tlSearch = ''; renderTimelineTable(); } });
+    }
+    tlSearchInput.value = tlSearch;
+    _tlSlot.replaceWith(tlSearchInput);
+    if (_tlHadFocus) tlSearchInput.focus();
+  }
 }
 
 // 时间线表格视图：快速筛选切换（再次点击同一档位 = 取消，null = 全部）
@@ -3850,6 +3902,7 @@ function syncRecurringDates(src) {
 // ============ DAILY QUOTES ============
 let quotesData = [];
 let currentQuoteIds = [];
+let quoteEditingId = null;   // R3.32：当前正在编辑的金句 id（null = 新增模式）
 
 function initQuotes() {
   const saved = localStorage.getItem('ai-task-lens-quotes');
@@ -3872,10 +3925,42 @@ function addQuote(text, author) {
 
 function deleteQuote(id) {
   quotesData = quotesData.filter(function(q) { return q.id !== id; });
+  if (quoteEditingId === id) quoteEditingId = null;   // 删除正在编辑的金句时退出编辑模式
   saveQuotes();
   currentQuoteIds = currentQuoteIds.filter(function(qid) { return qid !== id; });
   renderQuotesPanel();
   renderQuotesManagementModal();
+}
+
+// R3.32：进入编辑模式——回填表单，表单按钮切换为「保存修改」+「取消」
+function startEditQuote(id) {
+  var q = quotesData.find(function(x) { return x.id === id; });
+  if (!q) return;
+  quoteEditingId = id;
+  var textEl = document.getElementById('quote-add-text');
+  var authorEl = document.getElementById('quote-add-author');
+  if (textEl) textEl.value = q.text;
+  if (authorEl) authorEl.value = q.author || '';
+  var form = document.getElementById('quote-add-form-actions');
+  if (form) {
+    form.innerHTML =
+      '<button class="btn btn-primary btn-sm" onclick="handleAddQuote()">💾 保存修改</button>' +
+      '<button class="btn btn-outline btn-sm" onclick="cancelEditQuote()" style="margin-left:8px;">取消</button>';
+  }
+  if (textEl) textEl.focus();
+}
+
+// R3.32：退出编辑模式——清空表单，按钮恢复「添加金句」
+function cancelEditQuote() {
+  quoteEditingId = null;
+  var textEl = document.getElementById('quote-add-text');
+  var authorEl = document.getElementById('quote-add-author');
+  if (textEl) textEl.value = '';
+  if (authorEl) authorEl.value = '';
+  var form = document.getElementById('quote-add-form-actions');
+  if (form) {
+    form.innerHTML = '<button class="btn btn-primary btn-sm" onclick="handleAddQuote()">+ 添加金句</button>';
+  }
 }
 
 function getRandomQuotes(count) {
@@ -3960,6 +4045,7 @@ function renderQuotesManagementModal() {
         '<div class="quote-mgmt-text">' + escapeHtml(q.text) + '</div>' +
         '<div class="quote-mgmt-author">—— ' + escapeHtml(q.author || '佚名') + '</div>' +
       '</div>' +
+      '<button class="quote-mgmt-edit" onclick="startEditQuote(' + q.id + ')" title="编辑">✏️</button>' +
       '<button class="quote-mgmt-delete" onclick="deleteQuote(' + q.id + ')" title="删除">🗑</button>' +
     '</div>';
   }).join('');
@@ -3972,7 +4058,9 @@ function renderQuotesManagementModal() {
       '<div class="form-field">' +
         '<input type="text" id="quote-add-author" placeholder="作者/出处（可选）" maxlength="50">' +
       '</div>' +
-      '<button class="btn btn-primary btn-sm" onclick="handleAddQuote()">+ 添加金句</button>' +
+      '<div id="quote-add-form-actions">' +
+        '<button class="btn btn-primary btn-sm" onclick="handleAddQuote()">+ 添加金句</button>' +
+      '</div>' +
     '</div>' +
     '<div>' + (list || '<div class="quotes-empty">暂无金句</div>') + '</div>';
 }
@@ -3986,10 +4074,21 @@ function handleAddQuote() {
     textEl.focus();
     return;
   }
-  addQuote(text, authorEl.value);
-  renderQuotesManagementModal();
-  renderQuotesPanel();
-  showToast('金句已添加', 'success');
+  var author = (authorEl.value || '').trim();
+  if (quoteEditingId !== null) {
+    // R3.32 编辑模式：更新既有金句
+    quotesData = quotesData.map(function(q) { return q.id === quoteEditingId ? { id: q.id, text: text, author: author } : q; });
+    quoteEditingId = null;
+    saveQuotes();
+    renderQuotesManagementModal();
+    renderQuotesPanel();
+    showToast('金句已更新', 'success');
+  } else {
+    addQuote(text, author);
+    renderQuotesManagementModal();
+    renderQuotesPanel();
+    showToast('金句已添加', 'success');
+  }
 }
 
 // ============ DEPENDENCY SELECTOR ============
@@ -4314,6 +4413,24 @@ function renderNextSelector(autoOpen) {
   });
 }
 
+// R3.34：编辑弹窗内「＋ 新建」——打开完整的新建任务弹窗（与时间线行内「+ 后置内容」同一窗口），
+// 自动预填前置任务（当前编辑的任务）与开始时间（= 前置任务截止日期，由 addNextTask 处理）。
+// 编辑已有任务时先静默保存当前修改（参照 navigateToEntity 的"先存再跳"语义）：
+// saveTask 校验不通过或用户取消时返回 false，中止打开；保存成功后其内部已 closeTaskModal + renderAll，
+// 延时再调 addNextTask 打开新建弹窗。新建未保存模式下当前任务尚无 id、无法作为前置锚点，提示先保存。
+function quickCreateNextTask() {
+  if (editingTaskId === null) {
+    showToast('请先保存当前任务，再为它新建后置任务', 'warn');
+    return;
+  }
+  var parentId = editingTaskId;
+  var saved = saveTask();   // 内部成功时已 closeTaskModal(true)；失败/取消返回 false
+  if (!saved) return;
+  setTimeout(function() {
+    addNextTask(parentId);  // 同一完整弹窗：selectedDeps 预填前置、开始时间预填前置截止日期
+  }, 150);
+}
+
 // ── 文件选择器（关联文件管理系统）──
 let selectedFiles = []; // [{fileId, name, path}]
 let _fileDropdownOpen = false;
@@ -4483,6 +4600,16 @@ document.getElementById('next-chips').addEventListener('click', function(e) {
 });
 document.getElementById('next-search').addEventListener('input', renderNextSelector);
 document.getElementById('next-search').addEventListener('focus', function() { renderNextSelector(true); });
+
+// R3.33：后置任务「＋ 新建」按钮
+(function() {
+  var btn = document.getElementById('btn-quick-create-next');
+  if (btn) btn.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    quickCreateNextTask();
+  });
+})();
 
 // 文件搜索框事件
 (function() {
@@ -4727,7 +4854,8 @@ function addNextTask(parentId) {
   editingTaskId = null;
   nextParentTaskId = parentId;
   document.getElementById('modal-breadcrumb').style.display = 'none';
-  resetTaskForm({ type: parent.type || 'task' });
+  // R3.34：开始时间预填为前置任务的结束时间（截止日期）；前置无截止日期时 resetTaskForm 回落今天
+  resetTaskForm({ type: parent.type || 'task', startDate: parent.deadline || '' });
   document.getElementById('modal-task-title').textContent = '📝 添加后置任务';
   document.getElementById('modal-task').style.display = 'flex';
   selectedDeps = new Set([parentId]);
@@ -6583,18 +6711,25 @@ document.getElementById('quick-ai-input').addEventListener('keydown', (e) => {
 });
 
 // ============ 全局快捷键 ============
-// 视图编号映射：1 仪表盘 / 2 列表 / 3 日历(再按切时间线表格) / 4 矩阵 / 5 团队看板 / 6 习惯
-const _SHORTCUT_VIEW_KEYS = { '1': 'dashboard', '2': 'list', '3': 'timeline', '4': 'matrix', '5': 'board', '6': 'habits' };
+// 视图编号映射：1 仪表盘 / 2 时间线表格（R3.38 起原「列表」已移除，2 改指时间线表格）/ 3 日历(再按切时间线表格) / 4 矩阵 / 5 团队看板 / 6 习惯
+const _SHORTCUT_VIEW_KEYS = { '1': 'dashboard', '2': 'timelineTableShortcut', '3': 'timeline', '4': 'matrix', '5': 'board', '6': 'habits' };
 
-// 切换到时间线表格视图（该视图不在 nav-item 中，需手动激活）
-function _switchToTimelineTableByShortcut() {
+// R3.38：统一激活时间线表格视图（该视图不在 nav-item 路由中，需手动激活面板）
+// lightQuick=true 时同步点亮侧边栏「时间线」按钮（activeQuickFilter='timelineTable'）
+function activateTimelineTable(lightQuick) {
   currentView = 'timeline-table';
   document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
   const panel = document.getElementById('view-timeline-table');
   if (panel) panel.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  if (lightQuick) activeQuickFilter = 'timelineTable';
   updateQuickActionStates();
   renderTimelineTable();
+}
+
+// 切换到时间线表格视图（该视图不在 nav-item 中，需手动激活）
+function _switchToTimelineTableByShortcut() {
+  activateTimelineTable(true);
 }
 
 function _isTypingTarget(el) {
@@ -6640,15 +6775,15 @@ function initGlobalShortcuts() {
       createNewContent();
       return;
     }
-    // Ctrl/Cmd+K 或 /：搜索（切到列表视图并聚焦搜索框）
+    // Ctrl/Cmd+K 或 /：搜索（R3.38：切到时间线表格视图并聚焦其搜索框）
     if ((mod && e.key.toLowerCase() === 'k') || e.key === '/') {
       e.preventDefault();
       goToListView();
-      // 搜索框是 renderList 动态渲染的，需等 DOM 生成后聚焦
+      // 搜索框是 renderTimelineTable 动态渲染的（节点复用），需等 DOM 生成后聚焦
       setTimeout(() => {
-        const si = document.getElementById('list-filter');
+        const si = document.getElementById('tl-search-input');
         if (si) { si.focus(); si.select(); }
-      }, 80);
+      }, 120);
       return;
     }
     // ?：打开使用帮助
@@ -6673,6 +6808,11 @@ function initGlobalShortcuts() {
           const btn = document.querySelector('.nav-item[data-view="timeline"]');
           if (btn) btn.click();
         }
+        return;
+      }
+      // R3.38：数字键 2 由「列表」改指时间线表格（列表视图已移除）
+      if (view === 'timelineTableShortcut') {
+        activateTimelineTable(true);
         return;
       }
       const btn = document.querySelector('.nav-item[data-view="' + view + '"]');
@@ -6963,7 +7103,7 @@ function collectBackupData() {
   return data;
 }
 function buildBackupPayload() {
-  return { _formatVersion: BACKUP_FORMAT_VERSION, _appVersion: 'R3.30', _exportedAt: new Date().toISOString(), data: collectBackupData() };
+  return { _formatVersion: BACKUP_FORMAT_VERSION, _appVersion: 'R3.38', _exportedAt: new Date().toISOString(), data: collectBackupData() };
 }
 // 校验备份对象；通过返回 null，失败返回错误文案
 function validateBackup(obj) {
@@ -7549,7 +7689,7 @@ if ((tasks.length === 0 || !hasHierarchy) && dataSource !== 'csv') {
 renderAll();
 updateDataSourceBadge();
 updateQuickActionBadges();
-console.log('[version] R3.30 2026-08-29 新增 JSON 完整备份/恢复：顶栏「💾 备份」导出全部业务 localStorage（任务/习惯/金句/高亮/隐藏筛选/实体底色）为单个 JSON，「♻️ 恢复」经格式校验+确认后写回并刷新；BACKUP_STORE_KEYS 覆盖 11 个 key，排除健康检查临时快照；帮助弹窗数据管理章节补充备份说明');
+console.log('[version] R3.38 2026-09-05 删除「任务列表」视图（与时间线表格功能重叠）：移除侧边栏 data-view="list" 导航项（含 task-count 徽章）与 view-list 面板；renderAll 中 case \'list\' 兜底改渲染时间线表格；renderList 函数体保留为死代码但加守卫（view-list 面板不存在时安全转时间线表格，杜绝 null 报错）。所有原跳转列表的入口统一改道时间线表格——新增 activateTimelineTable() 统一激活逻辑；navigateToListWithFilter() 重写为映射时间线表格筛选（日期→tlDateFilter、类型→tlTableTypeFilter、已完成→tlDoneFilter、标题/搜索→tlSearch），暂不支持的下钻（进行中/阻塞/待办等状态、KISS、无截止、标签）跳时间线表格并 toast 提示"后续版本补齐"，不报错不白屏；goToListView()/navigateToTaskFromFile() 改走时间线表格；快捷键 2 由列表改指时间线表格，Ctrl+K 搜索改聚焦 tl-search-input。底部「🕐 时间线」按钮醒目化（新增 .qa-timeline-feature 类：未激活淡紫渐变底+主题色描边+加粗，激活实心渐变强阴影）。默认视图复核：启动 currentView=\'dashboard\' 直接 renderAll 渲染全局仪表盘，无任何跳列表逻辑。待补齐：时间线表格的状态多选（progress/blocked 等）、KISS 下钻、无截止筛选');
 if (typeof showToast === 'function') setTimeout(() => showToast('页面加载完成（含飞书同步修复）', 'success'), 500);
 
 // 飞书同步按钮事件绑定
@@ -7729,8 +7869,8 @@ function createRipple(element, e) {
 }
 
 // ── Quick Actions ──
-// 侧边栏 5 个快速筛选按钮互斥单选：今日待办 / 本周到期 / 本月到期 / 时间线 / 已归档
-// 同一时刻最多点亮 1 个；再次点击已点亮的按钮 = 取消筛选
+// 侧边栏快速筛选：互斥组仅「时间线」（R3.36 移除今日待办/本周到期/本月到期，R3.37 移除已完成），
+// 另有「叠加」「筛选」两个独立 toggle。再次点击已点亮的按钮 = 取消筛选。
 function quickFilter(type) {
   try {
     // 「叠加」和「筛选」是两个独立 toggle，不参与上方 4 个按钮的互斥组
@@ -7749,15 +7889,12 @@ function quickFilter(type) {
       return;
     }
 
-    // 再次点击同一个按钮 → 取消（回到无筛选的列表视图）
+    // 再次点击同一个按钮 → 取消（R3.38：列表视图已移除，取消时间线 = 清筛选并回到全局仪表盘）
     if (activeQuickFilter === type) {
-      if (type === 'done') {
-        listSortType = 'tree';
-        const sortSel = document.getElementById('list-sort-filter');
-        if (sortSel) sortSel.value = 'tree';
-      }
       clearAllFilters(true);   // 内部已把 activeQuickFilter 置 null
-      goToListView();
+      const dashBtn = document.querySelector('.nav-item[data-view="dashboard"]');
+      if (dashBtn) dashBtn.click();
+      else { currentView = 'dashboard'; renderAll(); }
       return;
     }
 
@@ -7765,66 +7902,28 @@ function quickFilter(type) {
     clearAllFilters(true);
     activeQuickFilter = type;   // 必须在 clearAllFilters 之后赋值，否则被清掉
 
-    // 特例：时间线表格视图（切到独立的 view-timeline-table，不走列表）
+    // 特例：时间线表格视图（切到独立的 view-timeline-table，不走 nav-item 路由）
     if (type === 'timelineTable') {
-      currentView = 'timeline-table';
-      document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
-      const panel = document.getElementById('view-timeline-table');
-      if (panel) panel.classList.add('active');
-      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-      updateQuickActionStates();
-      renderTimelineTable();
+      activateTimelineTable(true);
       return;
     }
 
-    switch(type) {
-      case 'todayTodo':
-        dateFilter = 'todayTodo';
-        break;
-      case 'weekDue':
-        dateFilter = 'weekDeadline';
-        break;
-      case 'monthDue':
-        dateFilter = 'monthDeadline';
-        break;
-      case 'done':
-        statusFilter = ['done'];
-        listSortType = 'completed-desc';
-        break;
-    }
+    // R3.36/R3.37/R3.38：侧边栏互斥组仅剩时间线（上方已处理 return），其余按钮均已移除。
     goToListView();
   } catch(e) {
     console.error('quickFilter error:', e);
   }
 }
 
-// 切到列表视图并刷新按钮点亮状态
+// R3.38：任务列表视图已移除，原「切到列表」统一改为切到时间线表格视图
 function goToListView() {
-  updateQuickActionStates();
-  const listNavBtn = document.querySelector('.nav-item[data-view="list"]');
-  if (listNavBtn) {
-    _navFromQuickFilter = true;    // 告知 nav-item 监听器：这是内部触发，别清点亮态
-    listNavBtn.click();
-    _navFromQuickFilter = false;
-  } else {
-    currentView = 'list';
-    document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('view-list').classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-    renderList();
-  }
-  // nav-item.click() 内部会 renderAll()，可能覆盖点亮状态，故再刷一次
-  updateQuickActionStates();
+  activateTimelineTable(true);
 }
 
 function updateQuickActionStates() {
-  // 上方 4 个按钮：互斥单选，由 activeQuickFilter 统一决定
+  // 互斥组按钮：仅时间线（R3.36 移除今日待办/本周到期/本月到期，R3.37 移除已完成），由 activeQuickFilter 统一决定
   const map = {
-    'qa-today': 'todayTodo',
-    'qa-week': 'weekDue',
-    'qa-month': 'monthDue',
     'qa-timeline-tl': 'timelineTable',
-    'qa-done': 'done',
   };
   Object.entries(map).forEach(([id, key]) => {
     const btn = document.getElementById(id);
@@ -7840,51 +7939,18 @@ function updateQuickActionStates() {
 function updateQuickActionBadges() {
   try {
     if (!tasks || !Array.isArray(tasks)) return;
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const todayEnd = new Date(today);
-    todayEnd.setHours(23, 59, 59, 999);
-    
-    const overdue3Days = new Date(today);
-    overdue3Days.setDate(overdue3Days.getDate() - 3);
-    overdue3Days.setHours(0, 0, 0, 0);
-    
-    const weekEnd = new Date(today);
-    weekEnd.setDate(today.getDate() + (7 - today.getDay()) % 7);
-    weekEnd.setHours(23, 59, 59, 999);
-    
-    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    monthEnd.setHours(23, 59, 59, 999);
-    
-    const todayTodo = tasks.filter(t => t && (t.type === 'task' || t.type === 'schedule') && t.status !== 'done' && t.status !== 'cancel' && !isArchivedOf(t) && t.deadline && 
-      new Date(t.deadline) >= overdue3Days && new Date(t.deadline) <= todayEnd
-    ).length;
-    
-    const weekDeadline = tasks.filter(t => t && (t.type === 'task' || t.type === 'schedule') && t.deadline && t.status !== 'done' && t.status !== 'cancel' && !isArchivedOf(t) && new Date(t.deadline) >= today && new Date(t.deadline) <= weekEnd).length;
-    
-    const monthDeadline = tasks.filter(t => t && (t.type === 'task' || t.type === 'schedule') && t.deadline && t.status !== 'done' && t.status !== 'cancel' && !isArchivedOf(t) && new Date(t.deadline) >= today && new Date(t.deadline) <= monthEnd).length;
-    
+
+    // R3.36：侧边栏今日待办/本周到期/本月到期三按钮已移除；R3.37：已完成按钮已移除，
+    // 不再计算对应徽章。已完成任务的查看改由列表视图「状态」筛选器（状态=已完成）承担。
     const archived = tasks.filter(t => t && isArchivedOf(t)).length;
     // 时间线（表格视图）徽章：未归档的内容块总数
     const timelineTotal = tasks.filter(t => t && !isArchivedOf(t)).length;
-    // 已完成任务徽章
-    const doneCount = tasks.filter(t => t && t.status === 'done' && !isArchivedOf(t)).length;
 
-    const badgeToday = document.getElementById('badge-today');
-    const badgeWeek = document.getElementById('badge-week');
-    const badgeMonth = document.getElementById('badge-month');
     const badgeTLTable = document.getElementById('badge-timeline-tl');
     const badgeArchived = document.getElementById('badge-archive-overlay');
-    const badgeDone = document.getElementById('badge-done');
 
-    if (badgeToday) badgeToday.textContent = todayTodo;
-    if (badgeWeek) badgeWeek.textContent = weekDeadline;
-    if (badgeMonth) badgeMonth.textContent = monthDeadline;
     if (badgeTLTable) badgeTLTable.textContent = timelineTotal;
     if (badgeArchived) badgeArchived.textContent = archived;
-    if (badgeDone) badgeDone.textContent = doneCount;
     // 顶栏健康度红点顺带刷新（P0+P1 数量）
     if (typeof updateHealthBadge === 'function') updateHealthBadge();
   } catch(e) {
@@ -8719,6 +8785,90 @@ async function syncPushLocalOnly() {
 // ── 更新记录 ──
 const CHANGELOG = [
   {
+    ver: 'R3.38',
+    date: '2026-09-05',
+    items: [
+      '删除「任务列表」视图（与时间线表格功能高度重叠）：移除侧边栏「📋 任务列表」导航项（含 299 数量徽章）与 view-list 面板。主导航现为 全局仪表盘 / 日历 / 优先级矩阵 / 团队看板 / 每日习惯，全部内容清单统一由底部「🕐 时间线」表格视图承担',
+      '所有原跳转列表的入口改道时间线表格：新增 activateTimelineTable() 统一激活；navigateToListWithFilter() 重写为映射时间线表格筛选——日期卡片（今日/本周/本月/逾期）→ tlDateFilter、类型卡片（目标/KR/任务等）→ tlTableTypeFilter、已完成卡片 → tlDoneFilter、建议下一步/洞察标题 → tlSearch 搜索框并聚焦',
+      '暂不支持的下钻（仪表盘「进行中/被阻塞」卡片、KISS 复盘列头、无截止日期、标签）点击后跳到时间线表格并 toast 提示"后续版本补齐"，不报错、不白屏；这些筛选能力计划在时间线表格补齐（状态多选、KISS 筛选）',
+      '底部「🕐 时间线」入口按钮醒目化：未激活即淡紫渐变底 + 主题色描边 + 加粗文字，在白底按钮群中一眼可见；激活后实心主题色渐变 + 强阴影',
+      '快捷键调整：数字键 2 原切列表、现切时间线表格；Ctrl/Cmd+K 或 / 搜索改为切时间线表格并聚焦其搜索框；从文件标签管理器跳回任务也改到时间线表格定位',
+      '默认视图确认为全局仪表盘：页面打开即渲染仪表盘（currentView=\'dashboard\'）；在时间线视图再点「时间线」按钮 = 清除筛选并回到全局仪表盘',
+      'renderList 函数体保留为不可达死代码（clearAllFilters/列筛选等共用逻辑仍引用），但加了守卫——view-list 面板不存在时任何意外调用都安全转渲染时间线表格，杜绝 null 报错',
+      '自测：_test_quickfilter.js（58 断言）、_test_completed_visibility.js（41 断言）、_test_done_sort.js（19 断言）同步更新为验证改道映射；node --check 通过；全量测试回归无失败',
+    ],
+  },
+  {
+    ver: 'R3.37',
+    date: '2026-09-03',
+    items: [
+      '继续精简左侧边栏快速操作区：移除「✅ 已完成」按钮（qa-done 及 badge-done 徽章）。侧边栏快速操作区现为三个按钮：时间线（互斥组唯一按钮，再点取消）+ 叠加、筛选（归档独立 toggle，两者互斥）',
+      '已完成任务的查看不受影响，改由列表视图「状态」筛选器承担：列表页状态下拉选「已完成」即 statusFilter=[done] 并按完成时间新→旧排序（completed-desc），该筛选器是与侧边栏独立的代码路径，本次未改动',
+      '代码清理：updateQuickActionStates 点亮 map 移除 qa-done 键；updateQuickActionBadges 移除 doneCount 计数与 badge-done 写入；quickFilter 移除仅剩的 done case（statusFilter/listSortType 设置）及取消分支里 done 的排序复位特殊处理',
+      '自测：_test_quickfilter.js 重写（静态断言 qa-done/badge-done/case done 均已移除、列表状态筛选器仍支持已完成；行为桩收敛为时间线互斥 + 叠加/筛选 toggle）；_test_completed_visibility.js 第 8 节、_test_done_sort.js 第 3 节同步改为断言「按钮已移除 + 列表状态筛选器保留已完成排序能力」',
+    ],
+  },
+  {
+    ver: 'R3.36',
+    date: '2026-09-03',
+    items: [
+      '精简左侧边栏快速操作区：移除「今日待办 / 本周到期 / 本月到期」三个日期快捷筛选按钮。日期快捷筛选仍可从两个入口使用——仪表盘顶部的同名快捷卡片（点击跳转列表按日期筛选）、时间线表格视图筛选栏（今日/本周/本月/逾期四档），两者均与侧边栏按钮是独立代码，本次未受影响',
+      '侧边栏快速操作区现为四个按钮：时间线、已完成（互斥单选，再点取消）+ 叠加、筛选（归档独立 toggle，两者互斥）',
+      '代码清理：updateQuickActionStates 点亮 map 移除三键；updateQuickActionBadges 移除三个徽章计数与写入（仪表盘卡片徽章在 renderDashboard 内独立计算，不受影响）；quickFilter switch 移除 todayTodo/weekDue/monthDue 三个 case；navigateToListWithFilter 仪表盘卡片分支移除三行失效的 activeQuickFilter 点亮赋值（dateFilter 筛选设置保留，仪表盘卡片筛选照常生效）',
+      '自测：_test_quickfilter.js 重写为 57 断言——静态防回归（index.html 无 qa-today/qa-week/qa-month 及徽章、app.js map/switch/徽章函数已清理、仪表盘卡片与时间线筛选栏仍在）+ 行为桩（互斥单选/再点取消/叠加筛选互斥/与互斥组共存/清筛选全灭）',
+    ],
+  },
+  {
+    ver: 'R3.35',
+    date: '2026-09-03',
+    items: [
+      '修复 KISS 复盘面板漏匹配 bug：仪表盘 KISS 面板与列表页 kiss 筛选在匹配 [KEEP]/[IMPROVE]/[START]/[STOP] 标记时，误读任务描述字段为 description（数据模型中描述字段实际叫 desc，description 恒为 undefined，被 ||"" 兜底成空串），导致只有写在【标题】里的标记能命中，写在【描述】里的标记全部漏匹配——用户反馈"找不到 START 项目"即此因',
+      '两处统一改为 t.desc / taskData.desc，与普通关键词搜索（同文件 t.desc）、addTask/editTask/saveTask/CSV 导出的数据模型一致；现在标题或描述任一处含标记均可归入对应列，大小写不敏感',
+      '自测：临时桩脚本 8 断言全过（描述[START]命中、标题[KEEP]命中、小写[start]大小写不敏感、无标记不命中、一条可同时归多列、反证旧逻辑 description 漏匹配）；node --check 通过',
+    ],
+  },
+  {
+    ver: 'R3.34',
+    date: '2026-09-03',
+    items: [
+      '编辑任务弹窗「后置任务」旁「＋ 新建」改为打开完整的新建任务窗口（与时间线行内「+ 后置内容」是同一个弹窗），不再用 prompt 只填标题——可在新建时一次性设置优先级/状态/截止日期/负责人/描述等全部字段',
+      '自动预填：前置任务 = 当前正在编辑的任务；开始时间 = 前置任务的结束时间（截止日期 deadline，前置未设截止日期时回落为今天）。保存新任务后由 next/deps 双向同步自动建立依赖，无需回来再搜',
+      '编辑已有任务时点「＋ 新建」会先静默保存当前修改（参照任务链跳转的"先存再跳"逻辑）：当前表单校验不通过（如未选上级、标题为空）或用户在确认框取消时，中止打开新建窗，避免丢失改动；新建未保存模式下当前任务尚无 id，按钮提示先保存',
+      'addNextTask 统一支持开始时间预填，时间线行内「+ 后置内容」入口同样默认开始时间=前置截止日期',
+    ],
+  },
+  {
+    ver: 'R3.33',
+    date: '2026-09-02',
+    items: [
+      '编辑任务弹窗「后置任务」选择框右侧新增「＋ 新建」按钮：点击后弹窗输入标题，即快速创建一个任务并自动添加为后置依赖，无需先退出弹窗到列表里建任务再回来搜索',
+      '新建任务默认采用搜索框已输入的关键词作为标题预填；创建后立即出现在后置 chip 列表，保存当前任务时由 next/deps 双向同步自动建立依赖关系（新任务的前置依赖自动指向当前任务）',
+      '新建任务为独立 task 类型（parentId=null，不属于任何目标层级），与行内「添加后置任务」默认同父级的行为区分，避免在弹窗中快速补录后续事项时误挂到错误层级',
+      '（R3.34 已升级：该 prompt 快速创建改为打开完整新建任务窗口，本条保留为历史记录）',
+    ],
+  },
+  {
+    ver: 'R3.32',
+    date: '2026-09-01',
+    items: [
+      '每日金句管理弹窗新增「✏️ 编辑」：每条金句旁编辑按钮 → 表单回填内容/作者 → 按钮切换为「💾 保存修改 / 取消」→ 保存后更新并重渲染（quoteEditingId 记录编辑态）',
+      '删除正在编辑的金句自动退出编辑模式；编辑态保存空内容仍校验拦截',
+      '新增 _test_quotes_edit.js（桩 DOM 验证：回填/更新/取消/删除清理/编辑态保存）',
+    ],
+  },
+  {
+    ver: 'R3.31',
+    date: '2026-09-01',
+    items: [
+      '时间线表格视图新增搜索筛选：筛选栏「快速筛选：」后新增搜索框，按标题/描述/标签/负责人匹配（大小写不敏感）',
+      '命中保留祖先链：子内容块命中时沿 parentId 回溯显示其祖先目标，保持树形结构可读（computeSearchVisibleSet 纯函数，byId Map 缓存 + seen guard 防环形引用）',
+      '搜索优先于其他筛选：关键词非空时忽略日期/类型/已完成/实体筛选，清空或 Esc 后恢复；头部「（已筛选）」提示与清除筛选按钮同步纳入搜索条件',
+      '输入 200ms 防抖（debouncedRenderTimelineTable），重渲染后自动恢复输入框焦点与光标位置，连续输入不断',
+      'IME 修复（最终版）：搜索框节点复用架构——tlSearchInput 只创建一次，渲染时移动节点到 slot 占位而非重建（innerHTML 重写不销毁节点对象），配合组合中跳过渲染（tlSearchComposing 标志 + 防抖回调检查），任何输入法的组词过程都不会被打断；修复"输不进去中文/组合被强制提交"问题',
+      '新增 _test_timeline_search.js（纯函数 + DOM 桩断言）；既有时间线测试脚本同步补 tlSearch/computeSearchVisibleSet 桩',
+    ],
+  },
+  {
     ver: 'R3.30',
     date: '2026-08-29',
     items: [
@@ -9178,6 +9328,7 @@ const HELP_SECTIONS = [
       <li><b>归档</b>：行首勾选框归档（从日常视野移走），侧边栏「叠加/筛选」控制显示方式</li>
       <li><b>AI 智能录入</b>：顶栏输入框用自然语言描述，自动解析为结构化任务（回车或点 ▶）</li>
       <li><b>右键快捷操作</b>：右键实体筛选按钮（目标/KR）可「设置底色 / 高亮 / 隐藏」；右键任务行可「高亮 / 同步到飞书」</li>
+      <li><b>时间线搜索</b>：时间线表格筛选栏搜索框按标题/描述/标签/负责人筛选，命中内容连同祖先目标一起显示；搜索优先于日期/类型/实体筛选（Esc 清空恢复）</li>
     </ul>`,
   },
   {

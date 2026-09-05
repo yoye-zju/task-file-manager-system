@@ -1,10 +1,12 @@
 // _test_done_sort.js
 // R3.8: 「已完成视图」默认按完成时间 新→旧 排序
-// 验证 restore done 入口（navigateToListWithFilter/侧边栏按钮）都将 listSortType 设为 completed-desc
+// 验证已完成入口将 listSortType 设为 completed-desc；R3.37 起侧边栏「已完成」按钮移除，
+// 该排序能力由列表视图「状态」筛选器（type==='status' && value==='done'）保留。
 // 用法：node _test_done_sort.js
 const fs = require('fs');
 const path = require('path');
 const src = fs.readFileSync(path.join(__dirname, 'app.js'), 'utf-8');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf-8');
 
 let pass = 0, fail = 0;
 function check(desc, cond) {
@@ -67,40 +69,25 @@ let ngrove = 0;
   ngrove++;
 })();
 
-// ── 2. navigateToListWithFilter('status','done') 设置排序 ──
+// ── 2. 仪表盘「已完成」卡片入口（R3.38：列表视图移除，改道时间线表格 tlDoneFilter）──
 (() => {
-  console.log('\n[2] 仪表盘「已完成」卡片入口');
-  // 桩环境
-  const stubs = {
-    listActiveTags: null, listKissFilter: null, dateFilter: null,
-    activeQuickFilter: null, statusFilter: [], typeFilter: [], listSortType: 'tree',
-  };
-  const goto = { called: false };
-  const sandbox = {
-    listActiveTags: stubs,
-    listKissFilter: null,
-    dateFilter: null,
-    activeQuickFilter: null,
-    statusFilter: [],
-    typeFilter: [],
-    listSortType: 'tree',
-    querySelector: () => null,
-    document: {},
-    generateInsights: () => [],
-    goToListView: null,
-  };
-  // 直接读源码注入相关分支的片段太难（函数体含大量 DOM），改为静态断言：
-  check('status 分支含 value===\'done\' 时设 completed-desc', /type === 'status'[\s\S]*?if \(value === 'done'\) listSortType = 'completed-desc'/.test(src));
-  check('status 分支对非 done 不设 completed-desc', !/type === 'status'[\s\S]*?if \(value !== 'done'\)[\s\S]*?listSortType = 'completed-desc'/.test(src) || true);
+  console.log('\n[2] 仪表盘「已完成」卡片入口（R3.38 改道时间线表格）');
+  const navBlock = src.match(/function navigateToListWithFilter[\s\S]*?\n\}/)[0];
+  check('status=done 映射到时间线表格 tlDoneFilter', /type === 'status'[\s\S]*?tlDoneFilter = true/.test(navBlock));
+  check('跳转走 activateTimelineTable', navBlock.includes('activateTimelineTable'));
+  check('不再设置列表 listSortType completed-desc', !/type === 'status'[\s\S]*?listSortType = 'completed-desc'/.test(navBlock));
   ngrove++;
 })();
 
-// ── 3. 侧边栏「已完成」按钮 ──
+// ── 3. 已完成查看入口（R3.38：列表视图/导航项移除，由时间线表格已完成开关承接）──
 (() => {
-  console.log('\n[3] 侧边栏「已完成」快捷按钮');
-  check('done 分支 statusFilter=[done]', /case 'done':\s*\n\s*statusFilter = \['done'\];\s*\n\s*listSortType = 'completed-desc'/.test(src));
-  check('再次点击 done 恢复 tree', /if \(type === 'done'\) \{\s*\n\s*listSortType = 'tree';/.test(src));
-  check('select 含 completed-desc 选项', /<option value="completed-desc" \$\{listSortType === 'completed-desc' \? 'selected' : ''\}>✅ 完成时间（新→旧）<\/option>/.test(src));
+  console.log('\n[3] 已完成查看入口（R3.38 起列表视图移除）');
+  check('侧边栏已完成按钮已移除（无 qa-done）', !html.includes('id="qa-done"'));
+  check('任务列表导航项已移除（无 data-view="list"）', !html.includes('data-view="list"'));
+  check('view-list 面板已移除', !html.includes('id="view-list"'));
+  check('时间线表格已完成开关 setTlDoneFilter 存在', src.includes('function setTlDoneFilter'));
+  const _qfBlock = src.match(/function quickFilter\(type\) \{[\s\S]*?\n\}/)[0];
+  check('quickFilter 不再有 case \'done\'', !/case 'done':/.test(_qfBlock));
   ngrove++;
 })();
 

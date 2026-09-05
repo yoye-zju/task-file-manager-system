@@ -35,6 +35,7 @@ const document = {
   getElementById: (id) => id === 'view-timeline-table' ? {
     set innerHTML(v) { capturedHTML.view = v; },
     get innerHTML() { return capturedHTML.view; },
+    querySelector: () => null,
   } : null,
 };
 
@@ -56,10 +57,15 @@ const funcBody = src.substring(startIdx, i + 1);
 
 // 用 new Function 执行
 const runFn = new Function('document', 'tasks', 'highlightedIds', 'TYPE_COLORS', 'TYPE_LABELS', 'statusMap', 'getProgressColor', 'archiveOnly', 'isArchivedOf', 'showArchived',
-  'tlDateFilter', 'tlTableTypeFilter', 'DEFAULT_PRIORITY', 'PRIORITY_COLORS',
+  'tlDateFilter', 'tlTableTypeFilter', 'tlDoneFilter', 'tlEntityFilters', 'tlSearch', 'tlSearchInput', 'computeSearchVisibleSet',
+  'DEFAULT_PRIORITY', 'PRIORITY_COLORS',
+  'renderEntityFilterButtons', 'toggleTlTableEntityFilter', 'isEntityHighlighted', 'entityStateClass', 'nearestObjectIdOf', 'shortTitle',
   funcBody + '\nrenderTimelineTable();'
 );
-runFn(document, tasks, highlightedIds, TYPE_COLORS, TYPE_LABELS, statusMap, getProgressColor, archiveOnly, isArchivedOf, showArchived, null, null, '紧急不重要', {});
+runFn(document, tasks, highlightedIds, TYPE_COLORS, TYPE_LABELS, statusMap, getProgressColor, archiveOnly, isArchivedOf, showArchived,
+  null, null, false, null, '', null, function () { return new Set(); },
+  '重要不紧急', {},
+  () => '', () => {}, () => false, () => '', () => null, (t) => t);
 
 const html = capturedHTML.view;
 console.log('=== HTML length:', html.length);

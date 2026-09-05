@@ -75,7 +75,7 @@ const testTasks = [
 ];
 
 // 桩 DOM
-const fakeEl = { innerHTML: '', style: {} };
+const fakeEl = { innerHTML: '', style: {}, querySelector: () => null };
 const document = {
   getElementById: (id) => (id === 'view-timeline-table' ? fakeEl : null),
 };
@@ -113,7 +113,7 @@ const setTlDateFilter = new Function(setCode + '\nreturn setTlDateFilter;')();
 const factory = new Function(
   'document', 'tasks', 'TYPE_COLORS', 'TYPE_LABELS', 'statusMap', 'highlightedIds',
   'fileDisplayName', 'archiveOnly', 'showArchived', 'tlDateFilter', 'tlTableTypeFilter',
-  'tlDoneFilter', 'tlEntityFilters', 'renderEntityFilterButtons', 'toggleTlTableEntityFilter',
+  'tlDoneFilter', 'tlEntityFilters', 'tlSearch', 'tlSearchInput', 'computeSearchVisibleSet', 'renderEntityFilterButtons', 'toggleTlTableEntityFilter',
   'isEntityHighlighted', 'entityStateClass', 'nearestObjectIdOf', 'shortTitle',
   'DEFAULT_PRIORITY', 'PRIORITY_COLORS',
   'isArchivedOf', 'getProgressColor', 'showFileHoverCard', 'scheduleHideFileHoverCard',
@@ -123,8 +123,8 @@ const factory = new Function(
 );
 const api = factory(
   document, testTasks, TYPE_COLORS, TYPE_LABELS, statusMap, highlightedIds,
-  fileDisplayName, false, false, null, null, false, null,
-  renderEntityFilterButtons, toggleTlTableEntityFilter, isEntityHighlighted, entityStateClass, nearestObjectIdOf, shortTitle,
+  fileDisplayName, false, false, null, null, false, null, '', null,
+  function computeSearchVisibleSet() { return new Set(); }, renderEntityFilterButtons, toggleTlTableEntityFilter, isEntityHighlighted, entityStateClass, nearestObjectIdOf, shortTitle,
   '紧急不重要', {},
   isArchivedOf, getProgressColor, showFileHoverCard, scheduleHideFileHoverCard,
   handleListFileChipClick, editTask, toggleArchived, cycleTaskStatus,
